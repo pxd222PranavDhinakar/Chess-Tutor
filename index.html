@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chess Tutor with Stockfish & AI Coach</title>
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="assets/css/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/board.css">
+    <link rel="stylesheet" href="assets/css/panels.css">
+    <link rel="stylesheet" href="assets/css/controls.css">
+    <!-- AI Chat Styles -->
+    <link rel="stylesheet" href="assets/css/ai/chat-panel.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <h3>Game Information</h3>
+            
+            <div class="game-info">
+                <div class="info-box">
+                    <div class="info-label">Turn</div>
+                    <div class="info-value" id="turnDisplay">White</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-label">Moves</div>
+                    <div class="info-value" id="moveCount">0</div>
+                </div>
+            </div>
+
+            <h3>Engine Difficulty</h3>
+            <div class="engine-difficulty-panel">
+                <div class="rating-display">
+                    <div class="rating-number" id="engineRating">400</div>
+                    <div class="rating-label">Estimated Rating</div>
+                </div>
+                
+                <div class="opponent-info" id="opponentInfo">
+                    <div class="opponent-title" id="opponentTitle">Novice Player</div>
+                    <div class="opponent-desc" id="opponentDesc">Makes frequent mistakes but occasionally finds good moves. Builds confidence steadily.</div>
+                </div>
+                
+                <div class="preset-buttons">
+                    <div class="preset-btn active" data-rating="400" data-time="0.3">
+                        <div class="preset-title">Learning</div>
+                        <div class="preset-rating">300-500</div>
+                    </div>
+                    <div class="preset-btn" data-rating="600" data-time="0.5">
+                        <div class="preset-title">Practice</div>
+                        <div class="preset-rating">500-700</div>
+                    </div>
+                    <div class="preset-btn" data-rating="800" data-time="0.8">
+                        <div class="preset-title">Challenge</div>
+                        <div class="preset-rating">700-900</div>
+                    </div>
+                    <div class="preset-btn" data-rating="1000" data-time="1.0">
+                        <div class="preset-title">Improve</div>
+                        <div class="preset-rating">900-1100</div>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Engine Rating</span>
+                        <span class="slider-value" id="ratingValue">400</span>
+                    </div>
+                    <input type="range" class="slider" id="ratingSlider" 
+                        min="200" max="1500" value="400" step="25">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Thinking Time</span>
+                        <span class="slider-value" id="timeValue">0.3s</span>
+                    </div>
+                    <input type="range" class="slider" id="timeSlider" 
+                        min="0.1" max="3.0" value="0.3" step="0.1">
+                </div>
+                
+                <div class="advanced-options">
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="checkbox" id="allowBlunders" checked>
+                        <label for="allowBlunders">Allow occasional blunders</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="checkbox" id="limitDepth" checked>
+                        <label for="limitDepth">Limit calculation depth</label>
+                    </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="checkbox" id="varyStyle">
+                        <label for="varyStyle">Vary playing style</label>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Move History</h3>
+            <div class="move-history" id="moveHistory">
+                Game not started
+            </div>  
+            
+            <h3>Debug Log</h3>
+            <div class="debug-log" id="debugLog"></div>
+        </div>
+        
+        <!-- Center - Chess Board -->
+        <div class="board-container">
+            <h1>Chess Tutor with AI Coach</h1>
+            
+            <div id="status">Loading dependencies...</div>
+            
+            <div id="board"></div>
+            
+            <div class="controls">
+                <button id="newGameBtn" disabled>New Game</button>
+                <button id="undoBtn" disabled>Undo Move</button>
+                <button id="flipBtn" disabled>Flip Board</button>
+            </div>
+
+            <div class="controls">
+                <button id="playEngineBtn" disabled style="background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);" onclick="console.log('Play Engine clicked')">Play vs Engine</button>
+                <button id="stopEngineBtn" disabled style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);" onclick="console.log('Stop Engine clicked')">Stop Engine</button>
+                <button id="hintBtn" disabled style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);" onclick="console.log('Hint clicked')">Get Hint</button>
+            </div>
+
+            <div class="controls">
+                <button id="clearBtn" disabled>Clear Board</button>
+                <button id="clearAnnotationsBtn">Clear Annotations</button>
+            </div>
+        </div>
+        
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- AI Chat will be inserted here by ChatManager -->
+            
+            <div class="analysis-section">
+                <h3>Engine Status</h3>
+                <div id="engineStatus">
+                    <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; border-left: 3px solid #6c757d;">
+                        <div style="font-size: 12px; color: #6c757d; margin-bottom: 4px;">STATUS</div>
+                        <div id="engineStatusText" style="font-weight: 600; color: #495057;">Initializing...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h3>Game Analysis</h3>
+                <div id="gameAnalysis">
+                    <p>Make a move to see analysis</p>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3>Last Move</h3>
+                <div id="lastMove">
+                    <p>No moves yet</p>
+                </div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3>Position Info</h3>
+                <div id="positionInfo">
+                    <div style="background: #f8f9fa; padding: 12px; border-radius: 6px;">
+                        <div style="margin-bottom: 8px;">
+                            <strong style="color: #495057;">FEN:</strong>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <textarea id="fenInput" 
+                                style="width: 100%; height: 60px; font-family: monospace; font-size: 11px; color: #6c757d; background: white; padding: 8px; border: 1px solid #dee2e6; border-radius: 4px; resize: vertical; word-break: break-all;"
+                                placeholder="Paste FEN notation here..."></textarea>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="loadFenBtn" 
+                                style="flex: 1; padding: 8px 12px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;">
+                                Load FEN
+                            </button>
+                            <button id="copyFenBtn" 
+                                style="flex: 1; padding: 8px 12px; background: linear-gradient(135deg, #6c757d 0%, #545b62 100%); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;">
+                                Copy FEN
+                            </button>
+                        </div>
+                        <div id="fenValidation" style="margin-top: 8px; font-size: 11px; min-height: 16px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load jQuery first -->
+    <script>
+        // Ensure jQuery is loaded and available globally before any other scripts
+        try {
+            const $ = require('jquery');
+            window.$ = window.jQuery = $;
+            global.$ = global.jQuery = $;
+            console.log('jQuery pre-loaded and made global');
+        } catch (e) {
+            console.error('Failed to pre-load jQuery:', e);
+        }
+    </script>
+
+    <!-- Load external libraries -->
+    <script src="assets/libs/chessboard-1.0.0.min.js" 
+            onerror="console.error('Failed to load chessboard script')"
+            onload="console.log('Chessboard script loaded')">
+    </script>
+
+    <!-- Load our modular JavaScript files -->
+    <script src="assets/js/game-engine.js"></script>
+    <script src="assets/js/board-manager.js"></script>
+    <script src="assets/js/move-highlighting.js"></script>
+    <script src="assets/js/ui-updater.js"></script>
+    <script src="assets/js/board-annotations.js"></script>
+    <script src="assets/js/stockfish-interface.js"></script>
+
+    <!-- Game state context bridge -->
+    <script src="assets/js/game-state-context-bridge.js"></script>
+
+    <!-- Chess Knowledge Systems -->
+    <script src="./assets/js/ai/opening-knowledge-system.js"></script>
+
+    <!-- FIXED: Chess Tools using CommonJS -->
+    <script src="./ai/tools/chess-tools/chess-tools.js"></script>
+
+    <!-- FIXED: Enhanced Chat Interface using CommonJS -->
+    <script src="ai/interfaces/chat/enhanced-chat-interface.js"></script>
+
+    <!-- FIXED: Tool Integration Layer using CommonJS -->
+    <script src="assets/js/ai/tool-integration.js"></script>
+
+    <!-- Basic Chat Interface (fallback) -->
+    <script src="ai/interfaces/chat/chat-interface.js"></script>
+    
+    <!-- Chat Manager -->
+    <script src="assets/js/ai/chat-manager.js"></script>
+    
+    <!-- Load main orchestrator -->
+    <script src="assets/js/app-orchestrator.js"></script>
+
+    <!-- FIXED: Enhanced AI initialization script with proper error handling -->
+    <script>
+        // Wait for all scripts to load, then initialize
+        window.addEventListener('load', async () => {
+            console.log('🚀 Window loaded, initializing application with enhanced AI tools...');
+            
+            // Small delay to ensure all scripts are ready
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            try {
+                // Initialize main application
+                const app = new AppOrchestrator();
+                window.appOrchestrator = app;
+                await app.initialize();
+                console.log('✅ Application initialized successfully');
+                
+                // Wait for game state bridge to be fully ready
+                console.log('⏳ Waiting for game state bridge...');
+                let bridgeReady = false;
+                let attempts = 0;
+                
+                while (!bridgeReady && attempts < 50) {
+                    if (window.gameStateContextBridge && window.gameStateContextBridge.isReady()) {
+                        const context = window.gameStateContextBridge.getSimpleContext();
+                        if (context && context.fen) {
+                            bridgeReady = true;
+                            console.log('✅ Game state bridge confirmed ready with:', context);
+                            break;
+                        }
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    attempts++;
+                }
+                
+                // Enhanced AI Chat initialization with tools
+                console.log('🧠 Initializing AI Chat with enhanced tools and game state awareness...');
+                
+                const gameStateBridge = window.gameStateContextBridge;
+                
+                // Verify bridge before proceeding
+                if (!gameStateBridge) {
+                    throw new Error('Game state bridge not available');
+                }
+                
+                if (!gameStateBridge.isReady()) {
+                    throw new Error('Game state bridge not ready');
+                }
+                
+                console.log('🔧 Bridge verification passed, attempting enhanced initialization...');
+                
+                // Quick test of tool classes
+                console.log('🧪 Testing tool class availability...');
+                console.log('ChessTools available:', typeof window.ChessTools === 'function');
+                console.log('EnhancedChatInterface available:', typeof window.EnhancedChatInterface === 'function');
+                console.log('ToolIntegration available:', typeof window.ToolIntegration === 'object');
+                
+                // Initialize using the tool integration layer
+                let initResult;
+                let chatInterface;
+                let chatManager;
+                let isEnhanced = false;
+                
+                if (window.ToolIntegration && typeof window.ToolIntegration.initializeAIWithTools === 'function') {
+                    console.log('🛠️ Attempting enhanced AI initialization...');
+                    
+                    initResult = await window.ToolIntegration.initializeAIWithTools();
+                    
+                    if (initResult.success) {
+                        chatInterface = initResult.chatInterface;
+                        chatManager = window.aiChatManager;
+                        isEnhanced = initResult.isEnhanced;
+                        
+                        console.log('✅ Enhanced AI initialization completed');
+                        console.log('🔧 Enhanced mode:', isEnhanced);
+                        
+                        if (isEnhanced) {
+                            console.log('🛠️ Available tools:', initResult.toolsAvailable.map(t => t.name));
+                            
+                            // Log tool capabilities
+                            console.log('📋 Tool capabilities:');
+                            initResult.toolsAvailable.forEach(tool => {
+                                console.log(`  - ${tool.name}: ${tool.description}`);
+                            });
+                        }
+                        
+                    } else {
+                        throw new Error('Tool integration failed: ' + initResult.error);
+                    }
+                    
+                } else {
+                    throw new Error('ToolIntegration not available or initializeAIWithTools function missing');
+                }
+                
+                // Fallback if enhanced initialization failed
+                if (!initResult.success) {
+                    console.warn('⚠️ Enhanced AI initialization failed, using basic chat...');
+                    console.log('🔄 Falling back to basic chat interface...');
+                    
+                    chatInterface = new ChatInterface();
+                    await chatInterface.initialize(gameStateBridge);
+                    
+                    chatManager = new ChatManager();
+                    await chatManager.initialize(chatInterface);
+                    
+                    isEnhanced = false;
+                    console.log('✅ Basic AI Chat initialized as fallback');
+                }
+                
+                // Store globally for debugging
+                window.chessApp = app;
+                window.chessChat = { 
+                    interface: chatInterface, 
+                    manager: chatManager,
+                    gameStateBridge: gameStateBridge,
+                    isEnhanced: isEnhanced
+                };
+                
+                // Final verification
+                console.log('🧪 === ENHANCED AI VERIFICATION ===');
+                console.log('🧪 Chat interface type:', chatInterface?.constructor?.name);
+                console.log('🧪 Enhanced mode:', isEnhanced);
+                console.log('🧪 Tools available:', chatInterface?.getAvailableTools ? chatInterface.getAvailableTools().length : 0);
+                console.log('🧪 Chat has game state context:', chatInterface?.hasGameStateContext ? chatInterface.hasGameStateContext() : 'N/A');
+                console.log('🧪 Game summary:', chatInterface?.getCurrentGameSummary ? chatInterface.getCurrentGameSummary() : 'N/A');
+                
+                // Test game state context
+                if (gameStateBridge && gameStateBridge.isReady()) {
+                    const testContext = gameStateBridge.getContextForAI();
+                    console.log('🧪 Game state context test:', {
+                        available: testContext.available,
+                        fen: testContext.currentPosition?.fen,
+                        turn: testContext.currentPosition?.turn
+                    });
+                }
+                
+                console.log('🎉 Enhanced AI initialization complete!');
+                
+                // Optional: Test the enhanced chat interface
+                if (isEnhanced && chatInterface?.sendMessage) {
+                    console.log('🧪 Enhanced chat interface ready for testing');
+                    console.log('💡 Try asking: "Teach me the French Defense" to test tools');
+                }
+                
+            } catch (error) {
+                console.error('❌ Application initialization failed:', error);
+                document.getElementById('status').textContent = 'Failed to initialize: ' + error.message;
+                document.getElementById('status').style.borderColor = '#dc3545';
+                document.getElementById('status').style.background = '#f8d7da';
+            }
+        });
+
+        // ===== ENHANCED DEBUG FUNCTIONS =====
+
+        window.debugAI = function() {
+            console.log('🔍 === ENHANCED AI DEBUG INFO ===');
+            console.log('Chat Interface Type:', window.chessChat?.interface?.constructor?.name);
+            console.log('Enhanced Mode:', window.chessChat?.isEnhanced);
+            console.log('Tools Available:', window.chessChat?.interface?.getAvailableTools?.() || 'None');
+            console.log('Game State Bridge Ready:', window.gameStateContextBridge?.isReady());
+            console.log('Opening Knowledge System Ready:', window.openingKnowledgeSystem?.isInitialized);
+            console.log('App Orchestrator Available:', !!window.appOrchestrator);
+            console.log('Current Position:', window.gameStateContextBridge?.getSimpleContext());
+            
+            // Test tool class availability
+            console.log('ChessTools Class:', typeof window.ChessTools);
+            console.log('EnhancedChatInterface Class:', typeof window.EnhancedChatInterface);
+            console.log('ToolIntegration Object:', typeof window.ToolIntegration);
+            
+            // Test tool access
+            if (window.openingKnowledgeSystem?.isInitialized) {
+                const testSearch = window.openingKnowledgeSystem.searchByName('french');
+                console.log('Opening Search Test (French):', testSearch.length, 'results');
+            }
+            
+            // Test FEN loading capability
+            console.log('FEN Loading Available:', typeof window.appOrchestrator?.loadFEN === 'function');
+            
+            console.log('🔍 === END ENHANCED DEBUG ===');
+        };
+
+        window.testAITools = async function() {
+            console.log('🧪 Testing AI tools with actual queries...');
+            
+            const chatInterface = window.chessChat?.interface;
+            if (!chatInterface) {
+                console.log('❌ No AI chat interface available');
+                return;
+            }
+            
+            try {
+                // Test 1: Basic conversation
+                console.log('🧪 Test 1: Basic conversation');
+                const response1 = await chatInterface.sendMessage("Hello! What can you help me with?");
+                console.log('✅ Response 1:', response1.substring(0, 100) + '...');
+                
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
+                
+                // Test 2: Opening request (should trigger tools if enhanced)
+                console.log('🧪 Test 2: Opening teaching request (should use tools if enhanced)');
+                const response2 = await chatInterface.sendMessage("Can you teach me the French Defense?");
+                console.log('✅ Response 2:', response2.substring(0, 100) + '...');
+                
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
+                
+                // Test 3: Position analysis (should use current position tool)
+                console.log('🧪 Test 3: Position analysis request');
+                const response3 = await chatInterface.sendMessage("What do you think about the current position?");
+                console.log('✅ Response 3:', response3.substring(0, 100) + '...');
+                
+                console.log('🧪 All tool tests completed successfully');
+                
+            } catch (error) {
+                console.error('❌ Tool test failed:', error);
+            }
+        };
+
+        window.testChessToolsDirectly = async function() {
+            console.log('🛠️ Testing chess tools directly...');
+            
+            if (!window.ChessTools) {
+                console.error('❌ ChessTools class not available');
+                return;
+            }
+            
+            try {
+                // Create and initialize chess tools
+                const chessTools = new window.ChessTools();
+                await chessTools.initialize();
+                
+                const tools = chessTools.getToolsArray();
+                console.log('✅ Initialized', tools.length, 'tools');
+                
+                // Test search tool
+                const searchTool = tools.find(t => t.name === 'search_opening');
+                if (searchTool) {
+                    console.log('🔍 Testing search tool...');
+                    const searchResult = await searchTool.call({ searchTerm: 'french' });
+                    const parsed = JSON.parse(searchResult);
+                    console.log('✅ Search result:', parsed.success ? 'SUCCESS' : 'FAILED');
+                    if (parsed.success) {
+                        console.log('📊 Found', parsed.count, 'openings');
+                    }
+                }
+                
+                // Test position analysis tool
+                const analyzeTool = tools.find(t => t.name === 'analyze_current_position');
+                if (analyzeTool) {
+                    console.log('🧠 Testing analyze tool...');
+                    const analyzeResult = await analyzeTool.call({ analysisType: 'general' });
+                    const parsed = JSON.parse(analyzeResult);
+                    console.log('✅ Analyze result:', parsed.success ? 'SUCCESS' : 'FAILED');
+                }
+                
+                console.log('🛠️ Direct chess tools test completed');
+                
+            } catch (error) {
+                console.error('❌ Direct chess tools test failed:', error);
+            }
+        };
+
+        window.debugGameStateSystem = function() {
+            console.log('🔍 === COMPREHENSIVE GAME STATE DEBUG ===');
+            
+            // Test 1: Check if bridge exists
+            const bridge = window.gameStateContextBridge;
+            console.log('1. Bridge exists:', !!bridge);
+            
+            if (!bridge) {
+                console.error('❌ No game state bridge found!');
+                return;
+            }
+            
+            // Test 2: Check if bridge is ready
+            const isReady = bridge.isReady();
+            console.log('2. Bridge is ready:', isReady);
+            
+            if (!isReady) {
+                console.error('❌ Bridge not ready!');
+                return;
+            }
+            
+            // Test 3: Get simple context
+            const simpleContext = bridge.getSimpleContext();
+            console.log('3. Simple context:', simpleContext);
+            
+            // Test 4: Get full context
+            const fullContext = bridge.getContextForAI();
+            console.log('4. Full context available:', fullContext.available);
+            console.log('4. Full context keys:', Object.keys(fullContext));
+            
+            // Test 5: Check chat interface
+            const chatInterface = window.chessChat?.interface;
+            console.log('5. Chat interface exists:', !!chatInterface);
+            console.log('5. Chat interface type:', chatInterface?.constructor?.name);
+            
+            if (chatInterface) {
+                if (chatInterface.hasGameStateContext) {
+                    console.log('5. Chat has game state context:', chatInterface.hasGameStateContext());
+                }
+                if (chatInterface.getCurrentGameSummary) {
+                    console.log('5. Chat game summary:', chatInterface.getCurrentGameSummary());
+                }
+                if (chatInterface.getAvailableTools) {
+                    console.log('5. Available tools:', chatInterface.getAvailableTools());
+                }
+            }
+            
+            console.log('🔍 === END COMPREHENSIVE DEBUG ===');
+        };
+
+        window.testAfterMove = function() {
+            console.log('🎯 === QUICK POST-MOVE TEST ===');
+            
+            const bridge = window.gameStateContextBridge;
+            if (bridge && bridge.isReady()) {
+                const context = bridge.getSimpleContext();
+                console.log('Current game state:', context);
+                
+                const fullContext = bridge.getContextForAI();
+                if (fullContext.available && fullContext.moveHistory) {
+                    console.log('Move history length:', fullContext.moveHistory.length);
+                    if (fullContext.moveHistory.length > 0) {
+                        const lastMove = fullContext.moveHistory[fullContext.moveHistory.length - 1];
+                        console.log('Last move:', lastMove);
+                    }
+                }
+            }
+            
+            console.log('🎯 === END QUICK TEST ===');
+        };
+
+        window.testGameStateAwareness = function() {
+            console.log('🔬 === GAME STATE AWARENESS TEST ===');
+            
+            const bridge = window.gameStateContextBridge;
+            if (!bridge) {
+                console.error('❌ Game state bridge not found');
+                return;
+            }
+            
+            if (!bridge.isReady()) {
+                console.error('❌ Game state bridge not ready');
+                return;
+            }
+            
+            const context = bridge.getContextForAI();
+            console.log('✅ Full context available:', context.available);
+            console.log('✅ Context keys:', Object.keys(context));
+            
+            const simple = bridge.getSimpleContext();
+            console.log('✅ Simple context:', simple);
+            
+            const chat = window.chessChat?.interface;
+            if (chat) {
+                console.log('✅ Chat type:', chat.constructor.name);
+                if (chat.hasGameStateContext) {
+                    console.log('✅ Chat has game state:', chat.hasGameStateContext());
+                }
+                if (chat.getCurrentGameSummary) {
+                    console.log('✅ Game summary:', chat.getCurrentGameSummary());
+                }
+            }
+            
+            console.log('🔬 === END TEST ===');
+        };
+
+        // Quick chat test function
+        window.testChatWithGameState = async function() {
+            console.log('💬 === CHAT WITH GAME STATE TEST ===');
+            
+            const chat = window.chessChat?.interface;
+            if (!chat) {
+                console.error('❌ Chat interface not found');
+                return;
+            }
+            
+            if (chat.hasGameStateContext && !chat.hasGameStateContext()) {
+                console.error('❌ Chat has no game state context');
+                return;
+            }
+            
+            console.log('📤 Sending test message to chat...');
+            try {
+                const response = await chat.sendMessage("What is the current position?");
+                console.log('📥 Chat response:', response);
+            } catch (error) {
+                console.error('❌ Chat test failed:', error);
+            }
+            
+            console.log('💬 === END CHAT TEST ===');
+        };
+
+        window.debugOpeningLookup = function() {
+            const bridge = window.gameStateContextBridge;
+            if (bridge && bridge.openingKnowledge) {
+                const oks = bridge.openingKnowledge;
+                
+                // Debug database structure
+                if (oks.debugDatabaseStructure) {
+                    oks.debugDatabaseStructure();
+                }
+                
+                // Test current position
+                const gameState = bridge.gameEngine.getGameState();
+                console.log('Testing current FEN:', gameState.fen);
+                
+                const result = oks.getOpeningInfo(gameState.fen);
+                console.log('Opening lookup result:', result);
+            }
+        };
+
+        // Enhanced debug function specifically for tools
+        window.debugToolSystem = function() {
+            console.log('🛠️ === TOOL SYSTEM DEBUG ===');
+            
+            // Check if enhanced interface is loaded
+            console.log('EnhancedChatInterface available:', typeof window.EnhancedChatInterface === 'function');
+            console.log('ChessTools available:', typeof window.ChessTools === 'function');
+            console.log('ToolIntegration available:', typeof window.ToolIntegration === 'object');
+            
+            // Check current chat interface
+            const chat = window.chessChat?.interface;
+            if (chat) {
+                console.log('Current chat type:', chat.constructor.name);
+                console.log('Has tools:', !!chat.getAvailableTools);
+                
+                if (chat.getAvailableTools) {
+                    const tools = chat.getAvailableTools();
+                    console.log('Available tools:', tools);
+                } else {
+                    console.log('No getAvailableTools method - likely basic interface');
+                }
+            }
+            
+            // Test global tool access points
+            console.log('Opening knowledge system:', !!window.openingKnowledgeSystem);
+            console.log('App orchestrator:', !!window.appOrchestrator);
+            console.log('Game state bridge:', !!window.gameStateContextBridge);
+            
+            // Test tool integration functions
+            if (window.ToolIntegration) {
+                console.log('ToolIntegration functions:');
+                console.log('- initializeAIWithTools:', typeof window.ToolIntegration.initializeAIWithTools);
+                console.log('- testToolFunctionality:', typeof window.ToolIntegration.testToolFunctionality);
+                console.log('- setupGlobalToolAccess:', typeof window.ToolIntegration.setupGlobalToolAccess);
+                console.log('- quickTestChessTools:', typeof window.ToolIntegration.quickTestChessTools);
+            }
+            
+            console.log('🛠️ === END TOOL DEBUG ===');
+        };
+
+        // Initialize opening lookup after everything loads
+        setTimeout(debugOpeningLookup, 1000);
+
+        // Handle Stockfish status updates
+        if (typeof require !== 'undefined') {
+            const { ipcRenderer } = require('electron');
+            
+            // Listen for Stockfish errors
+            ipcRenderer.on('stockfish-error', (event, error) => {
+                console.error('Stockfish error from main process:', error);
+                const statusEl = document.getElementById('engineStatusText');
+                if (statusEl) {
+                    statusEl.textContent = 'Engine Error';
+                    statusEl.style.color = '#dc3545';
+                }
+            });
+        }
+
+        // Log available debug functions
+        console.log('📝 Enhanced AI debugging functions loaded:');
+        console.log('  - window.debugAI() - Show enhanced AI system status');
+        console.log('  - window.testAITools() - Test tool functionality with actual AI queries');
+        console.log('  - window.testChessToolsDirectly() - Test chess tools directly');
+        console.log('  - window.debugToolSystem() - Debug tool system specifically');
+        console.log('  - window.debugGameStateSystem() - Debug game state integration');
+        console.log('  - window.testChatWithGameState() - Test chat with game awareness');
+        console.log('  - window.testAfterMove() - Quick test after making a move');
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+/* Interactive Elements - Buttons, Status, and Controls */
+
+/* Status Bar */
+#status {
+    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+    padding: 16px 24px;
+    margin: 20px 0;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    border-left: 4px solid #007bff;
+    font-size: 16px;
+    min-width: 300px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Button Controls */
+.controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+button {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+}
+
+button:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,123,255,0.4);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Add these styles to your controls.css file */
+
+/* ELO Slider Styling */
+.elo-slider-container {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+#eloSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: linear-gradient(to right, #dc3545, #ffc107, #28a745);
+    border-radius: 3px;
+    outline: none;
+    transition: opacity 0.2s;
+}
+
+#eloSlider:hover {
+    opacity: 0.8;
+}
+
+#eloSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+    transition: all 0.2s ease;
+}
+
+#eloSlider::-webkit-slider-thumb:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+    box-shadow: 0 3px 6px rgba(0,123,255,0.4);
+}
+
+#eloSlider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+    transition: all 0.2s ease;
+}
+
+#eloSlider::-moz-range-thumb:hover {
+    background: #0056b3;
+    transform: scale(1.1);
+}
+
+#eloSlider:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#eloSlider:disabled::-webkit-slider-thumb {
+    cursor: not-allowed;
+    background: #6c757d;
+}
+
+/* ELO Preset Buttons */
+.elo-preset {
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 60px;
+}
+
+.elo-preset:hover {
+    background: #e9ecef !important;
+    border-color: #adb5bd !important;
+    transform: translateY(-1px);
+}
+
+.elo-preset:active {
+    transform: translateY(0);
+}
+
+.elo-preset.active {
+    background: #007bff !important;
+    color: white !important;
+    border-color: #007bff !important;
+}
+
+/* ELO Value Display */
+#eloValue {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #dee2e6;
+}

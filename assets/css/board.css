@@ -1,0 +1,161 @@
+/* Chess Board Styling and Move Highlights */
+
+.board-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 600px;
+    position: relative;
+}
+
+#board { 
+    width: 480px; 
+    height: 480px;
+    margin: 20px 0;
+    border: 3px solid #495057;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    position: relative;
+}
+
+/* Override chessboard.js default highlights to disable them */
+.highlight1-32417, .highlight2-9c5d2 {
+    box-shadow: none !important;
+}
+
+/* ===== NATIVE SQUARE HIGHLIGHTING SYSTEM ===== */
+/* Using chessboard.js square classes directly for precise positioning */
+
+/* Last move highlighting (yellow squares) */
+.square-55d63.last-move-from {
+    background-color: rgba(255, 235, 59, 0.6) !important;
+    box-shadow: inset 0 0 3px 2px rgba(255, 193, 7, 0.8) !important;
+}
+
+.square-55d63.last-move-to {
+    background-color: rgba(255, 235, 59, 0.6) !important;
+    box-shadow: inset 0 0 3px 2px rgba(255, 193, 7, 0.8) !important;
+}
+
+/* Selected piece highlighting (brighter yellow) */
+.square-55d63.selected-highlight {
+    background-color: rgba(255, 235, 59, 0.8) !important;
+    box-shadow: inset 0 0 5px 3px rgba(255, 193, 7, 1) !important;
+}
+
+/* Annotation highlighting (red squares from right-click) */
+.square-55d63.annotation-highlight {
+    background-color: rgba(255, 0, 0, 0.4) !important;
+    box-shadow: inset 0 0 3px 2px rgba(255, 0, 0, 0.8) !important;
+}
+
+/* ===== CSS-BASED MOVE INDICATORS ===== */
+/* Using pseudo-elements for perfect positioning without DOM manipulation */
+
+/* Possible move dots for empty squares */
+.square-55d63.possible-move::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Capture move circles for squares with enemy pieces */
+.square-55d63.capture-move::after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    right: 10%;
+    bottom: 10%;
+    border: 4px solid rgba(0, 0, 0, 0.35);
+    border-radius: 50%;
+    box-sizing: border-box;
+    background-color: transparent;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Alternative capture indicator for smaller pieces - can be used for pawns or cramped squares */
+.square-55d63.capture-move-small::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    right: 15%;
+    bottom: 15%;
+    border: 3px solid rgba(0, 0, 0, 0.35);
+    border-radius: 50%;
+    box-sizing: border-box;
+    background-color: transparent;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Hover effects for move indicators (optional enhancement) */
+.square-55d63.possible-move:hover::after {
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 22px;
+    height: 22px;
+}
+
+.square-55d63.capture-move:hover::after {
+    border-color: rgba(0, 0, 0, 0.5);
+    border-width: 5px;
+}
+
+/* Hint highlighting (green squares for suggested moves) */
+.square-55d63.hint-highlight {
+    background-color: rgba(40, 167, 69, 0.6) !important;
+    box-shadow: inset 0 0 3px 2px rgba(40, 167, 69, 0.9) !important;
+}
+
+/* ===== REMOVE OLD OVERLAY SYSTEM ===== */
+/* These classes are no longer needed - remove when switching to native system */
+/*
+.highlight-square {
+    position: absolute;
+    width: 12.5%;
+    height: 12.5%;
+    z-index: 10;
+    pointer-events: none;
+    box-sizing: border-box;
+}
+
+.highlight-possible-move {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: transparent;
+}
+
+.move-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.35);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+
+.capture-circle {
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    border: 4px solid rgba(0, 0, 0, 0.35);
+    box-sizing: border-box;
+    background-color: transparent;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+}
+*/

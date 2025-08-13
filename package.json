@@ -1,0 +1,32 @@
+{
+  "name": "chess-tutor",
+  "version": "1.0.0",
+  "description": "AI-powered chess tutor with Stockfish engine",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "keywords": [
+    "chess",
+    "tutor",
+    "ai",
+    "stockfish",
+    "electron"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^32.0.1"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.3.68",
+    "@langchain/ollama": "^0.2.3",
+    "chess.js": "^1.0.0",
+    "date-fns": "^4.1.0",
+    "jquery": "^3.7.1",
+    "langchain": "^0.3.30",
+    "uuid": "^11.1.0",
+    "zod": "^3.25.76"
+  }
+}

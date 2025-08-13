@@ -1,0 +1,3 @@
+# Add these lines to .gitignore
+stockfish/stockfish
+node_modules/
