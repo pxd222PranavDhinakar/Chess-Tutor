@@ -42,53 +42,147 @@ class StockfishInterface {
     }
 
     /**
-     * Setup IPC communication with main process
+     * Setup IPC communication with main process - COMPREHENSIVE DIAGNOSTICS
      */
     async setupIPCCommunication() {
         if (typeof require === 'undefined') {
             throw new Error('Stockfish requires Electron environment');
         }
 
-        const { ipcRenderer } = require('electron');
-        this.ipcRenderer = ipcRenderer;
+        try {
+            const { ipcRenderer } = require('electron');
+            this.ipcRenderer = ipcRenderer;
 
-        // Listen for Stockfish output
-        this.ipcRenderer.on('stockfish-output', (event, output) => {
-            this.handleEngineOutput(output);
-        });
+            // Listen for Stockfish output
+            this.ipcRenderer.on('stockfish-output', (event, output) => {
+                console.log('📥 Raw Stockfish output received:', output);
+                this.handleEngineOutput(output);
+            });
 
-        console.log('IPC communication setup complete');
+            // Listen for Stockfish errors from main process
+            this.ipcRenderer.on('stockfish-error', (event, error) => {
+                console.error('❌ Stockfish error from main process:', error);
+                this.emit('stockfish-error', { error: error });
+            });
+
+            // Listen for process status updates
+            this.ipcRenderer.on('stockfish-process-status', (event, status) => {
+                console.log('📊 Stockfish process status:', status);
+            });
+
+            console.log('✅ IPC communication setup complete');
+            
+            // Test IPC communication with diagnostics
+            return new Promise((resolve, reject) => {
+                const testTimeout = setTimeout(() => {
+                    console.warn('⚠️ IPC test timeout - this might indicate main process issues');
+                    // Don't reject, just continue
+                    resolve();
+                }, 3000);
+                
+                // Test if main process is responding
+                this.ipcRenderer.once('stockfish-ipc-test-response', (event, data) => {
+                    clearTimeout(testTimeout);
+                    console.log('✅ IPC communication test successful:', data);
+                    resolve();
+                });
+                
+                // Send test message
+                console.log('📤 Sending IPC test...');
+                this.ipcRenderer.send('stockfish-ipc-test');
+                
+                // Also request process status
+                this.ipcRenderer.send('stockfish-status-request');
+            });
+            
+        } catch (error) {
+            console.error('❌ Failed to setup IPC communication:', error);
+            throw error;
+        }
     }
 
     /**
-     * Initialize the Stockfish engine
+     * Initialize the Stockfish engine - COMPREHENSIVE DIAGNOSTICS
      */
     async initializeEngine() {
         return new Promise((resolve, reject) => {
+            console.log('🚀 Starting Stockfish engine initialization...');
+            
             const timeout = setTimeout(() => {
+                console.error('❌ Stockfish initialization timeout after 15 seconds');
+                console.error('💡 Possible causes:');
+                console.error('   1. Stockfish binary not found or not executable');
+                console.error('   2. Main process not forwarding commands correctly');
+                console.error('   3. Stockfish process crashed or hung');
+                console.error('   4. IPC communication broken');
                 reject(new Error('Engine initialization timeout'));
-            }, 5000);
+            }, 15000); // Increased to 15 seconds for better diagnostics
+
+            let uciokReceived = false;
+            let readyokReceived = false;
 
             // Wait for UCI OK response
             const initCallback = (data) => {
-                if (data.type === 'uciok') {
+                console.log('📨 Engine response received:', data);
+                
+                if (data.type === 'uciok' && !uciokReceived) {
+                    uciokReceived = true;
+                    console.log('✅ UCI OK received - engine supports UCI protocol');
+                    
+                    // Send isready command to ensure engine is fully ready
+                    console.log('📤 Sending isready command...');
+                    this.sendCommand('isready');
+                }
+                
+                if (data.type === 'readyok' && uciokReceived && !readyokReceived) {
+                    readyokReceived = true;
                     clearTimeout(timeout);
                     this.off('engine-response', initCallback);
                     this.isEngineReady = true;
-                    console.log('Stockfish engine ready');
-                    
-                    // EMIT THE READY EVENT HERE
+                    console.log('✅ Stockfish engine fully initialized and ready');
                     this.emit('stockfish-ready');
-                    
                     resolve();
                 }
             };
 
             this.on('engine-response', initCallback);
             
-            // Send UCI initialization
-            this.sendCommand('uci');
+            // Add a small delay before sending UCI command
+            setTimeout(() => {
+                console.log('📤 Sending UCI initialization command...');
+                const success = this.sendCommand('uci');
+                if (!success) {
+                    clearTimeout(timeout);
+                    reject(new Error('Failed to send UCI command'));
+                }
+            }, 100);
         });
+    }
+
+    /**
+     * Send command to Stockfish engine - ENHANCED DIAGNOSTICS
+     */
+    sendCommand(command) {
+        if (!this.ipcRenderer) {
+            console.error('❌ IPC not available - cannot send command:', command);
+            return false;
+        }
+        
+        try {
+            console.log('📤 Sending to Stockfish via IPC:', command);
+            this.ipcRenderer.send('stockfish-command', command);
+            
+            // Also send a diagnostic ping
+            this.ipcRenderer.send('stockfish-command-sent', { 
+                command: command, 
+                timestamp: Date.now() 
+            });
+            
+            return true;
+        } catch (error) {
+            console.error('❌ Failed to send command to Stockfish:', error);
+            return false;
+        }
     }
 
     /**
@@ -207,19 +301,6 @@ class StockfishInterface {
         }
         
         return info;
-    }
-
-    /**
-     * Send command to Stockfish engine
-     */
-    sendCommand(command) {
-        if (!this.ipcRenderer) {
-            console.error('IPC not available');
-            return;
-        }
-        
-        console.log('Sending to Stockfish:', command);
-        this.ipcRenderer.send('stockfish-command', command);
     }
 
     /**

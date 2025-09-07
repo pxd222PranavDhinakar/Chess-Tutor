@@ -57,7 +57,7 @@ If the user asks about identifying the current position or opening (like "What o
     }
 
     /**
-     * Initialize the enhanced chat interface - FIXED FOR OLLAMA
+     * Initialize the enhanced chat interface - UPDATED WITH PLUGINS
      */
     async initialize(gameStateContextBridge) {
         console.log('🚀 EnhancedChatInterface: Starting initialization...');
@@ -92,8 +92,21 @@ If the user asks about identifying the current position or opening (like "What o
             
             console.log('🔧 EnhancedChatInterface: Loaded', this.tools.length, 'chess tools');
             
+            // NEW: Initialize feature plugins system
+            if (window.FeaturePlugins && window.openingLookupPlugin && window.positionLoadingPlugin) {
+                this.featurePlugins = new window.FeaturePlugins();
+                this.featurePlugins.register(window.openingLookupPlugin);
+                this.featurePlugins.register(window.positionLoadingPlugin);
+                this.featurePlugins.register(window.strategicAnnotationPlugin);
+
+                console.log('🔌 EnhancedChatInterface: Feature plugins system initialized');
+            } else {
+                console.warn('⚠️ EnhancedChatInterface: Feature plugins not available, using fallback mode');
+                this.featurePlugins = null;
+            }
+            
             this.isInitialized = true;
-            console.log('✅ EnhancedChatInterface: Initialized successfully with tools');
+            console.log('✅ EnhancedChatInterface: Initialized successfully with tools and plugins');
             
             // Test basic LLM connection (but don't block initialization)
             try {
@@ -113,55 +126,41 @@ If the user asks about identifying the current position or opening (like "What o
     }
 
     /**
-     * Send a message and get a response - FIXED VERSION
+     * Send a message and get a response - UPDATED WITH PLUGIN SYSTEM
      */
     async sendMessage(userMessage) {
-        console.log('📨 EnhancedChatInterface: Processing message with tools:', userMessage);
+        console.log('📨 EnhancedChatInterface: Processing message with plugins:', userMessage);
         
         try {
-            // Plan tool usage based on message content
+            // NEW: Try feature plugins first
+            if (this.featurePlugins) {
+                const gameContext = this.getGameStateContext();
+                const pluginResponse = await this.featurePlugins.handleMessage(userMessage, gameContext);
+                
+                if (pluginResponse) {
+                    console.log('✅ EnhancedChatInterface: Plugin handled the message');
+                    // Update conversation history
+                    this.updateConversationHistory(userMessage, pluginResponse);
+                    return pluginResponse;
+                }
+            }
+            
+            // FALLBACK: Use existing tool-based approach if no plugin handled it
+            console.log('🔄 EnhancedChatInterface: No plugin handled message, using tool-based approach');
+            
+            // Plan tool usage based on message content (existing logic)
             const plan = this.analyzeMessageForToolUsage(userMessage);
             console.log('🧠 Tool usage plan:', plan);
             
             let toolResults = [];
             
-            // Execute tools if needed
+            // Execute tools if needed (existing logic)
             if (plan.shouldUseTool && plan.toolSequence.length > 0) {
                 console.log('🛠️ Executing tool sequence:', plan.toolSequence);
                 toolResults = await this.executeTools(plan);
             }
             
-            // ✅ QUICK FIX: If we have tool results for opening identification, return directly
-            if (toolResults.length > 0 && plan.reason === 'Opening identification question detected') {
-                const result = toolResults[0];
-                console.log('🔍 DEBUG: Tool result for opening identification:', JSON.stringify(result, null, 2));
-                
-                if (result.success && result.result.analysis) {
-                    const analysis = result.result.analysis;
-                    console.log('🔍 DEBUG: Analysis object:', JSON.stringify(analysis, null, 2));
-                    
-                    if (analysis.openingInfo) {
-                        const opening = analysis.openingInfo;
-                        console.log('🔍 DEBUG: Found opening info:', JSON.stringify(opening, null, 2));
-                        return `This position is from the **${opening.name}** (${opening.eco}). ${opening.moves ? `The moves are: ${opening.moves}` : ''}`;
-                    } else {
-                        console.log('❌ DEBUG: No openingInfo in analysis object');
-                        // Let's check if the opening info is available in the game context directly
-                        const gameContext = this.getGameStateContext();
-                        if (gameContext && gameContext.openingKnowledge && gameContext.openingKnowledge.available) {
-                            const opening = gameContext.openingKnowledge.opening;
-                            console.log('🔍 DEBUG: Found opening in game context:', opening.name);
-                            return `This position is from the **${opening.name}** (${opening.eco}). The moves that led to this position are: ${opening.moves || 'Not available'}`;
-                        } else {
-                            console.log('❌ DEBUG: No opening info in game context either');
-                        }
-                    }
-                } else {
-                    console.log('❌ DEBUG: Tool result not successful or no analysis');
-                }
-            }
-            
-            // For other cases, try LLM or use fallback
+            // Try LLM or use fallback (existing logic)
             try {
                 // Build conversation context with tool results
                 const messages = this.buildConversationContext(userMessage, toolResults);
@@ -190,60 +189,17 @@ If the user asks about identifying the current position or opening (like "What o
     }
     
     /**
-     * Analyze message for tool usage - FIXED VERSION
+     * Analyze message for tool usage - SIMPLIFIED FOR NON-PLUGIN CASES
      */
     analyzeMessageForToolUsage(message) {
         const lowerMessage = message.toLowerCase();
         
-        console.log('🧠 Analyzing message for tool usage:', lowerMessage);
+        console.log('🧠 Analyzing message for tool usage (non-plugin):', lowerMessage);
         
-        const openingName = this.extractOpeningNameSimple(lowerMessage);
-        console.log('🔍 Extracted opening:', openingName);
-        
-        // ✅ FIXED: Opening identification questions - should analyze current position
-        if (lowerMessage.includes('what opening') || lowerMessage.includes('which opening') || 
-            lowerMessage.includes('opening is this') || lowerMessage.includes('what\'s this opening') ||
-            lowerMessage.includes('identify this opening') || lowerMessage.includes('name of this opening') ||
-            lowerMessage.includes('current opening') || lowerMessage.includes('what opening is this')) {
-            
-            console.log('🎯 Detected: Opening identification question');
-            return {
-                shouldUseTool: true,
-                toolSequence: ['analyze_current_position'],  // ✅ FIXED - analyze current position
-                analysisType: 'opening',  // ✅ FIXED - use valid enum value
-                reason: 'Opening identification question detected'
-            };
-        }
-        
-        // Teaching about specific opening (different from identifying current opening)
-        if (openingName && (lowerMessage.includes('teach') || lowerMessage.includes('learn') || 
-            lowerMessage.includes('explain') || lowerMessage.includes('show me'))) {
-            
-            console.log('🎯 Detected: Opening teaching request');
-            return {
-                shouldUseTool: true,
-                toolSequence: ['search_opening', 'get_opening_details', 'load_position'],
-                openingName: openingName,
-                reason: 'Opening teaching request detected'
-            };
-        }
-        
-        // Direct opening questions (tell me about X opening)
-        if ((lowerMessage.includes('what is') || lowerMessage.includes('tell me about') || lowerMessage.includes('explain')) && 
-            (openingName || lowerMessage.includes('opening') || lowerMessage.includes('defense'))) {
-            
-            console.log('🎯 Detected: Opening question');
-            return {
-                shouldUseTool: true,
-                toolSequence: ['search_opening', 'get_opening_details'],
-                openingName: openingName || 'french defense',
-                reason: 'Opening question detected'
-            };
-        }
-        
-        // Position analysis
-        if (lowerMessage.includes('analyze') || lowerMessage.includes('current position') || 
-            lowerMessage.includes('what do you think') || lowerMessage.includes('evaluate')) {
+        // Only handle cases that plugins don't cover
+        // Position analysis (not opening identification)
+        if (lowerMessage.includes('analyze') || lowerMessage.includes('evaluate') || 
+            lowerMessage.includes('what do you think')) {
             
             console.log('🎯 Detected: Analysis request');
             return {
@@ -254,35 +210,11 @@ If the user asks about identifying the current position or opening (like "What o
             };
         }
         
-        // Load position requests
-        if ((lowerMessage.includes('load') || lowerMessage.includes('set up') || lowerMessage.includes('demonstrate')) && 
-            (openingName || lowerMessage.includes('position'))) {
-            
-            console.log('🎯 Detected: Load request');
-            return {
-                shouldUseTool: true,
-                toolSequence: ['search_opening', 'load_position'],
-                openingName: openingName || 'french defense',
-                reason: 'Load position request detected'
-            };
-        }
-        
-        // If opening mentioned without other context, search for it
-        if (openingName) {
-            console.log('🎯 Detected: Opening mentioned');
-            return {
-                shouldUseTool: true,
-                toolSequence: ['search_opening', 'get_opening_details'],
-                openingName: openingName,
-                reason: 'Opening mentioned'
-            };
-        }
-        
-        console.log('🔍 No tool usage needed');
+        console.log('🔍 No tool usage needed for this message');
         return {
             shouldUseTool: false,
             toolSequence: [],
-            reason: 'No matching patterns detected'
+            reason: 'No matching patterns detected or handled by plugins'
         };
     }
 

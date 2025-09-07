@@ -744,6 +744,46 @@ class AppOrchestrator {
     }
 
     /**
+     * Load FEN position - PLUGIN INTEGRATION METHOD
+     * Called by position loading plugin
+     */
+    loadFEN(fenString) {
+        try {
+            console.log('🎯 AppOrchestrator.loadFEN: Loading FEN via plugin:', fenString);
+            
+            // Stop any engine game in progress
+            if (this.stockfishInterface && this.isPlayingAgainstEngine) {
+                this.stockfishInterface.stopEngineGame();
+            }
+            
+            // Clear highlights
+            this.moveHighlighter.clearHighlights();
+            if (this.boardAnnotations) {
+                this.boardAnnotations.clearAllAnnotations();
+                this.boardAnnotations.clearHintHighlights();
+            }
+            
+            // Use the existing gameEngine.loadFen method
+            const success = this.gameEngine.loadFen(fenString);
+            
+            if (success) {
+                // Update the board and UI
+                this.boardManager.updatePosition();
+                this.uiUpdater.updateAll();
+                this.uiUpdater.log(`✅ Plugin loaded FEN: ${fenString}`, 'success');
+                return true;
+            } else {
+                this.uiUpdater.log('❌ Chess.js rejected the FEN notation', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('FEN loading error:', error);
+            this.uiUpdater.log(`❌ FEN load error: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
+    /**
      * Handle FEN input real-time validation - NEW FUNCTION
      */
     handleFenInputChange() {
