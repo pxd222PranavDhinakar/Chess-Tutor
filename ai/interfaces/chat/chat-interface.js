@@ -52,7 +52,7 @@ Guidelines:
     }
 
     /**
-     * Initialize the chat interface with game state bridge
+     * Initialize the chat interface with game state bridge - UPDATED FOR DEEPSEEK
      */
     async initialize(gameStateContextBridge = null) {
         console.log('🔧 ChatInterface: Initializing with game state awareness...');
@@ -81,13 +81,14 @@ Guidelines:
             this.SystemMessage = SystemMessage;
             this.AIMessage = AIMessage;
             
-            // Initialize the chat model
+            // UPDATED: Initialize with DeepSeek-R1:14b for enhanced reasoning
             this.llm = new ChatOllama({
-                model: "llama3.2:3b",
-                temperature: 0.3,        // ← Lower from 0.7 for more focused responses
-                num_predict: 100,        // ← NEW: Limit max tokens (instead of max_tokens)
-                top_p: 0.5,             // ← NEW: More focused text generation  
-                top_k: 10,              // ← NEW: Consider fewer token options
+                model: "deepseek-r1:14b",
+                temperature: 0.1,        // Very low for logical reasoning
+                num_predict: 300,        // Moderate tokens for basic chat
+                top_p: 0.3,             // More focused text generation  
+                top_k: 5,               // Consider fewer token options
+                repeat_penalty: 1.1,    // Reduce repetition
                 baseUrl: "http://localhost:11434",
             });
 

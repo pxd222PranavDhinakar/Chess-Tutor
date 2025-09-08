@@ -370,7 +370,127 @@ try {
         }
     );
 
-    // Create ChessTools class
+    /**
+     * Tool for creating board annotations - NEW TOOL FOR HIGHLIGHTING
+     */
+    const createAnnotationTool = tool(
+        async ({ squares, annotationType, reason }) => {
+            try {
+                console.log('🎨 CreateAnnotationTool: Creating annotations:', { squares, annotationType, reason });
+                
+                if (!window.appOrchestrator || !window.appOrchestrator.boardAnnotations) {
+                    return JSON.stringify({
+                        success: false,
+                        error: "Board annotations system not available"
+                    });
+                }
+                
+                const boardAnnotations = window.appOrchestrator.boardAnnotations;
+                let annotationsCreated = 0;
+                
+                // Validate squares array
+                if (!Array.isArray(squares) || squares.length === 0) {
+                    return JSON.stringify({
+                        success: false,
+                        error: "Invalid squares array provided"
+                    });
+                }
+                
+                // Create annotations based on type
+                switch (annotationType) {
+                    case 'highlight':
+                        // Add red square highlights
+                        squares.forEach(square => {
+                            if (isValidSquare(square)) {  // FIXED: Remove 'this.'
+                                boardAnnotations.addSquareHighlight(square);
+                                annotationsCreated++;
+                            }
+                        });
+                        break;
+                        
+                    case 'hint':
+                        // Add green hint highlights
+                        squares.forEach(square => {
+                            if (isValidSquare(square)) {  // FIXED: Remove 'this.'
+                                boardAnnotations.highlightHintMove(square, square); // Single square hint
+                                annotationsCreated++;
+                            }
+                        });
+                        break;
+                        
+                    case 'arrow':
+                        // Create arrows between pairs of squares
+                        for (let i = 0; i < squares.length - 1; i += 2) {
+                            const fromSquare = squares[i];
+                            const toSquare = squares[i + 1];
+                            if (isValidSquare(fromSquare) && isValidSquare(toSquare)) {  // FIXED: Remove 'this.'
+                                boardAnnotations.addArrow(fromSquare, toSquare);
+                                annotationsCreated++;
+                            }
+                        }
+                        break;
+                        
+                    case 'move':
+                        // Show possible moves from a square
+                        if (squares.length >= 1 && window.appOrchestrator.gameEngine) {
+                            const fromSquare = squares[0];
+                            if (isValidSquare(fromSquare)) {  // FIXED: Remove 'this.'
+                                const possibleMoves = window.appOrchestrator.gameEngine.getPossibleMoves(fromSquare);
+                                possibleMoves.forEach(move => {
+                                    boardAnnotations.addSquareHighlight(move.to);
+                                    annotationsCreated++;
+                                });
+                            }
+                        }
+                        break;
+                        
+                    default:
+                        return JSON.stringify({
+                            success: false,
+                            error: `Unknown annotation type: ${annotationType}`
+                        });
+                }
+                
+                console.log(`🎨 CreateAnnotationTool: Created ${annotationsCreated} annotations`);
+                
+                return JSON.stringify({
+                    success: true,
+                    annotationsCreated: annotationsCreated,
+                    squares: squares,
+                    type: annotationType,
+                    message: `Created ${annotationsCreated} ${annotationType} annotations`,
+                    reason: reason
+                });
+                
+            } catch (error) {
+                console.error('❌ CreateAnnotationTool: Error:', error);
+                return JSON.stringify({
+                    success: false,
+                    error: error.message
+                });
+            }
+        },
+        {
+            name: "create_annotation",
+            description: "Create visual annotations on the chess board including highlights, arrows, and move indicators. Use this when users ask to highlight pieces, show good moves, mark important squares, or create visual guides.",
+            schema: z.object({
+                squares: z.array(z.string()).describe("Array of chess squares in algebraic notation (e.g., ['e4', 'd5', 'f3']). For arrows, provide pairs of squares [from, to, from2, to2]."),
+                annotationType: z.enum(['highlight', 'hint', 'arrow', 'move']).describe("Type of annotation: 'highlight' for red squares, 'hint' for green squares, 'arrow' for arrows between squares, 'move' for showing possible moves from a square"),
+                reason: z.string().describe("Brief explanation of why these annotations are being created (e.g., 'highlighting the advanced pawns')")
+            })
+        }
+    );
+
+    /**
+     * Helper function to validate chess square notation - NEW HELPER FUNCTION
+     */
+    function isValidSquare(square) {
+        return typeof square === 'string' && 
+               square.length === 2 && 
+               /^[a-h][1-8]$/.test(square);
+    }
+
+    // Create ChessTools class - UPDATED TO INCLUDE ANNOTATION TOOL
     class ChessTools {
         constructor() {
             console.log('🟢 ChessTools constructor called');
@@ -378,7 +498,8 @@ try {
                 searchOpeningTool,
                 loadPositionTool,
                 getOpeningDetailsTool,
-                analyzeCurrentPositionTool
+                analyzeCurrentPositionTool,
+                createAnnotationTool  // NEW TOOL ADDED
             ];
             this.isInitialized = true;
         }
@@ -399,6 +520,15 @@ try {
                 name: tool.name,
                 description: tool.description
             }));
+        }
+        
+        /**
+         * Helper function to validate chess square notation - NEW HELPER METHOD
+         */
+        isValidSquare(square) {
+            return typeof square === 'string' && 
+                   square.length === 2 && 
+                   /^[a-h][1-8]$/.test(square);
         }
     }
 

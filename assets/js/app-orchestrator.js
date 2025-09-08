@@ -885,7 +885,7 @@ class AppOrchestrator {
     }
 
     /**
-     * Called when application is fully ready - UPDATED
+     * Called when application is fully ready - UPDATED TO EXPOSE BOARD ANNOTATIONS
      */
     onApplicationReady() {
         this.uiUpdater.log('🎮 Chess Tutor ready to play!', 'success');
@@ -907,6 +907,10 @@ class AppOrchestrator {
 
         // Make game state bridge available globally for AI chat
         window.gameStateContextBridge = this.gameStateContextBridge;
+        
+        // NEW: Make board annotations available globally for AI tools
+        window.boardAnnotations = this.boardAnnotations;
+        console.log('🎨 Board annotations system made available for AI tools');
     }
 
     /**

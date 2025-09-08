@@ -218,16 +218,21 @@
     <!-- Chess Knowledge Systems -->
     <script src="./assets/js/ai/opening-knowledge-system.js"></script>
 
-    <!-- NEW: Feature Plugins System -->
+    <!-- NEW: Agentic AI Systems -->
+    <script src="assets/js/ai/user-profile-system.js"></script>
+    <script src="assets/js/ai/goal-management-system.js"></script>
+    <script src="assets/js/ai/chess-coach-agent.js"></script>
+
+    <!-- Feature Plugins System -->
     <script src="ai/feature-plugins.js"></script>
 
-    <!-- FIXED: Chess Tools using CommonJS -->
+    <!-- Chess Tools using CommonJS -->
     <script src="./ai/tools/chess-tools/chess-tools.js"></script>
 
-    <!-- FIXED: Enhanced Chat Interface using CommonJS -->
+    <!-- Enhanced Chat Interface using CommonJS -->
     <script src="ai/interfaces/chat/enhanced-chat-interface.js"></script>
 
-    <!-- FIXED: Tool Integration Layer using CommonJS -->
+    <!-- Tool Integration Layer using CommonJS -->
     <script src="assets/js/ai/tool-integration.js"></script>
 
     <!-- Basic Chat Interface (fallback) -->
@@ -239,11 +244,11 @@
     <!-- Load main orchestrator -->
     <script src="assets/js/app-orchestrator.js"></script>
 
-    <!-- FIXED: Enhanced AI initialization script with proper error handling -->
+    <!-- Enhanced AI initialization script with agentic capabilities -->
     <script>
         // Wait for all scripts to load, then initialize
         window.addEventListener('load', async () => {
-            console.log('🚀 Window loaded, initializing application with enhanced AI tools...');
+            console.log('🚀 Window loaded, initializing application with agentic AI capabilities...');
             
             // Small delay to ensure all scripts are ready
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -273,8 +278,8 @@
                     attempts++;
                 }
                 
-                // Enhanced AI Chat initialization with tools
-                console.log('🧠 Initializing AI Chat with enhanced tools and game state awareness...');
+                // ENHANCED: Agentic AI Chat initialization with full capabilities
+                console.log('🤖 Initializing Agentic AI Chess Coach with learning capabilities...');
                 
                 const gameStateBridge = window.gameStateContextBridge;
                 
@@ -287,22 +292,26 @@
                     throw new Error('Game state bridge not ready');
                 }
                 
-                console.log('🔧 Bridge verification passed, attempting enhanced initialization...');
+                console.log('🔧 Bridge verification passed, attempting agentic initialization...');
                 
-                // Quick test of tool classes
-                console.log('🧪 Testing tool class availability...');
+                // Verify agentic class availability
+                console.log('🧪 Testing agentic class availability...');
+                console.log('UserProfileSystem available:', typeof window.UserProfileSystem === 'function');
+                console.log('GoalManagementSystem available:', typeof window.GoalManagementSystem === 'function');
+                console.log('ChessCoachAgent available:', typeof window.ChessCoachAgent === 'function');
                 console.log('ChessTools available:', typeof window.ChessTools === 'function');
                 console.log('EnhancedChatInterface available:', typeof window.EnhancedChatInterface === 'function');
                 console.log('ToolIntegration available:', typeof window.ToolIntegration === 'object');
                 
-                // Initialize using the tool integration layer
+                // Initialize using the tool integration layer with agentic enhancement
                 let initResult;
                 let chatInterface;
                 let chatManager;
                 let isEnhanced = false;
+                let isAgentic = false;
                 
                 if (window.ToolIntegration && typeof window.ToolIntegration.initializeAIWithTools === 'function') {
-                    console.log('🛠️ Attempting enhanced AI initialization...');
+                    console.log('🛠️ Attempting agentic AI initialization...');
                     
                     initResult = await window.ToolIntegration.initializeAIWithTools();
                     
@@ -311,17 +320,41 @@
                         chatManager = window.aiChatManager;
                         isEnhanced = initResult.isEnhanced;
                         
-                        console.log('✅ Enhanced AI initialization completed');
-                        console.log('🔧 Enhanced mode:', isEnhanced);
-                        
-                        if (isEnhanced) {
-                            console.log('🛠️ Available tools:', initResult.toolsAvailable.map(t => t.name));
+                        // Check if agentic features are available
+                        if (chatInterface && chatInterface.getAgenticStatus) {
+                            const agenticStatus = chatInterface.getAgenticStatus();
+                            isAgentic = agenticStatus.agenticMode;
                             
-                            // Log tool capabilities
-                            console.log('📋 Tool capabilities:');
-                            initResult.toolsAvailable.forEach(tool => {
-                                console.log(`  - ${tool.name}: ${tool.description}`);
-                            });
+                            console.log('✅ Agentic AI initialization completed');
+                            console.log('🔧 Enhanced mode:', isEnhanced);
+                            console.log('🤖 Agentic mode:', isAgentic);
+                            
+                            if (isAgentic) {
+                                console.log('🧠 Agentic features:');
+                                console.log('  - User profile system:', agenticStatus.userProfileAvailable);
+                                console.log('  - Goal management:', agenticStatus.goalManagementAvailable);
+                                console.log('  - Self-monitoring agent:', agenticStatus.agentInitialized);
+                                
+                                if (agenticStatus.userProfile) {
+                                    console.log('  - User skill level:', agenticStatus.userProfile.skillLevel);
+                                    console.log('  - Learning style:', agenticStatus.userProfile.learningStyle);
+                                }
+                                
+                                if (agenticStatus.goals) {
+                                    console.log('  - Active goals:', agenticStatus.goals.activeGoalCount);
+                                    console.log('  - Completed goals:', agenticStatus.goals.completedGoalCount);
+                                }
+                            }
+                            
+                            if (isEnhanced) {
+                                console.log('🛠️ Available tools:', initResult.toolsAvailable.map(t => t.name));
+                                
+                                // Log tool capabilities
+                                console.log('📋 Tool capabilities:');
+                                initResult.toolsAvailable.forEach(tool => {
+                                    console.log(`  - ${tool.name}: ${tool.description}`);
+                                });
+                            }
                         }
                         
                     } else {
@@ -334,7 +367,7 @@
                 
                 // Fallback if enhanced initialization failed
                 if (!initResult.success) {
-                    console.warn('⚠️ Enhanced AI initialization failed, using basic chat...');
+                    console.warn('⚠️ Agentic AI initialization failed, using basic chat...');
                     console.log('🔄 Falling back to basic chat interface...');
                     
                     chatInterface = new ChatInterface();
@@ -344,25 +377,39 @@
                     await chatManager.initialize(chatInterface);
                     
                     isEnhanced = false;
+                    isAgentic = false;
                     console.log('✅ Basic AI Chat initialized as fallback');
                 }
                 
-                // Store globally for debugging
+                // Store globally for debugging and access
                 window.chessApp = app;
                 window.chessChat = { 
                     interface: chatInterface, 
                     manager: chatManager,
                     gameStateBridge: gameStateBridge,
-                    isEnhanced: isEnhanced
+                    isEnhanced: isEnhanced,
+                    isAgentic: isAgentic
                 };
                 
                 // Final verification
-                console.log('🧪 === ENHANCED AI VERIFICATION ===');
+                console.log('🧪 === AGENTIC AI VERIFICATION ===');
                 console.log('🧪 Chat interface type:', chatInterface?.constructor?.name);
                 console.log('🧪 Enhanced mode:', isEnhanced);
+                console.log('🧪 Agentic mode:', isAgentic);
                 console.log('🧪 Tools available:', chatInterface?.getAvailableTools ? chatInterface.getAvailableTools().length : 0);
                 console.log('🧪 Chat has game state context:', chatInterface?.hasGameStateContext ? chatInterface.hasGameStateContext() : 'N/A');
                 console.log('🧪 Game summary:', chatInterface?.getCurrentGameSummary ? chatInterface.getCurrentGameSummary() : 'N/A');
+                
+                // Test agentic status if available
+                if (chatInterface?.getAgenticStatus) {
+                    const agenticStatus = chatInterface.getAgenticStatus();
+                    console.log('🧪 Agentic status:', {
+                        mode: agenticStatus.agenticMode,
+                        userProfile: agenticStatus.userProfileAvailable,
+                        goals: agenticStatus.goalManagementAvailable,
+                        agent: agenticStatus.agentInitialized
+                    });
+                }
                 
                 // Test game state context
                 if (gameStateBridge && gameStateBridge.isReady()) {
@@ -374,12 +421,29 @@
                     });
                 }
                 
-                console.log('🎉 Enhanced AI initialization complete!');
+                console.log('🎉 Agentic AI Chess Coach initialization complete!');
                 
-                // Optional: Test the enhanced chat interface
-                if (isEnhanced && chatInterface?.sendMessage) {
-                    console.log('🧪 Enhanced chat interface ready for testing');
-                    console.log('💡 Try asking: "Teach me the French Defense" to test tools');
+                // Show initialization summary
+                const features = [];
+                if (isAgentic) features.push('🤖 Agentic Learning');
+                if (isEnhanced) features.push('🛠️ Tool Integration');
+                features.push('♟️ Chess Expertise');
+                features.push('🎯 Game State Awareness');
+                
+                console.log('🚀 Active Features:', features.join(', '));
+                
+                // Provide usage suggestions
+                if (isAgentic) {
+                    console.log('💡 Try these agentic features:');
+                    console.log('  - "I want to learn the French Defense" (sets learning goals)');
+                    console.log('  - "Teach me tactics" (adapts to your skill level)');
+                    console.log('  - "What should I focus on?" (uses goal persistence)');
+                    console.log('  - Chat will learn your preferences and adapt over time!');
+                } else if (isEnhanced) {
+                    console.log('💡 Try these enhanced features:');
+                    console.log('  - "Teach me the French Defense" (uses opening tools)');
+                    console.log('  - "Highlight the center squares" (creates annotations)');
+                    console.log('  - "Analyze this position" (contextual analysis)');
                 }
                 
             } catch (error) {
@@ -390,33 +454,202 @@
             }
         });
 
-        // ===== ENHANCED DEBUG FUNCTIONS =====
+        // ===== ENHANCED DEBUG FUNCTIONS WITH AGENTIC SUPPORT =====
 
         window.debugAI = function() {
-            console.log('🔍 === ENHANCED AI DEBUG INFO ===');
+            console.log('🔍 === AGENTIC AI DEBUG INFO ===');
             console.log('Chat Interface Type:', window.chessChat?.interface?.constructor?.name);
             console.log('Enhanced Mode:', window.chessChat?.isEnhanced);
+            console.log('Agentic Mode:', window.chessChat?.isAgentic);
             console.log('Tools Available:', window.chessChat?.interface?.getAvailableTools?.() || 'None');
             console.log('Game State Bridge Ready:', window.gameStateContextBridge?.isReady());
             console.log('Opening Knowledge System Ready:', window.openingKnowledgeSystem?.isInitialized);
             console.log('App Orchestrator Available:', !!window.appOrchestrator);
             console.log('Current Position:', window.gameStateContextBridge?.getSimpleContext());
             
-            // Test tool class availability
-            console.log('ChessTools Class:', typeof window.ChessTools);
+            // Agentic system status
+            if (window.chessChat?.interface?.getAgenticStatus) {
+                const status = window.chessChat.interface.getAgenticStatus();
+                console.log('🤖 Agentic Status:', status);
+            }
+            
+            // Test class availability
+            console.log('UserProfileSystem Class:', typeof window.UserProfileSystem);
+            console.log('GoalManagementSystem Class:', typeof window.GoalManagementSystem);
+            console.log('ChessCoachAgent Class:', typeof window.ChessCoachAgent);
             console.log('EnhancedChatInterface Class:', typeof window.EnhancedChatInterface);
             console.log('ToolIntegration Object:', typeof window.ToolIntegration);
             
-            // Test tool access
-            if (window.openingKnowledgeSystem?.isInitialized) {
-                const testSearch = window.openingKnowledgeSystem.searchByName('french');
-                console.log('Opening Search Test (French):', testSearch.length, 'results');
+            console.log('🔍 === END AGENTIC DEBUG ===');
+        };
+
+        window.testAgenticFeatures = async function() {
+            console.log('🧪 Testing agentic AI features...');
+            
+            const chatInterface = window.chessChat?.interface;
+            if (!chatInterface) {
+                console.log('❌ No AI chat interface available');
+                return;
             }
             
-            // Test FEN loading capability
-            console.log('FEN Loading Available:', typeof window.appOrchestrator?.loadFEN === 'function');
+            if (!chatInterface.getAgenticStatus) {
+                console.log('❌ Chat interface does not support agentic features');
+                return;
+            }
             
-            console.log('🔍 === END ENHANCED DEBUG ===');
+            const status = chatInterface.getAgenticStatus();
+            console.log('🤖 Agentic status:', status);
+            
+            if (!status.agenticMode) {
+                console.log('❌ Agentic mode not active');
+                return;
+            }
+            
+            try {
+                // Test 1: Goal setting conversation
+                console.log('🧪 Test 1: Goal setting conversation');
+                const response1 = await chatInterface.sendMessage("I want to learn chess openings, especially the French Defense");
+                console.log('✅ Response 1:', response1.substring(0, 100) + '...');
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Test 2: Learning style adaptation
+                console.log('🧪 Test 2: Learning style adaptation');
+                const response2 = await chatInterface.sendMessage("Can you show me visually what you mean?");
+                console.log('✅ Response 2:', response2.substring(0, 100) + '...');
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Test 3: Progress tracking
+                console.log('🧪 Test 3: Progress tracking');
+                const response3 = await chatInterface.sendMessage("What should I focus on next?");
+                console.log('✅ Response 3:', response3.substring(0, 100) + '...');
+                
+                // Check updated status
+                const updatedStatus = chatInterface.getAgenticStatus();
+                console.log('🧪 Updated agentic status:', {
+                    userInteractions: updatedStatus.agentStats?.sessionStats?.interactions || 0,
+                    currentGoals: updatedStatus.goals?.activeGoalCount || 0,
+                    userSkillLevel: updatedStatus.userProfile?.skillLevel || 'unknown'
+                });
+                
+                console.log('🧪 All agentic feature tests completed successfully');
+                
+            } catch (error) {
+                console.error('❌ Agentic feature test failed:', error);
+            }
+        };
+
+        window.showUserProfile = function() {
+            const chatInterface = window.chessChat?.interface;
+            if (!chatInterface?.getAgenticStatus) {
+                console.log('❌ Agentic features not available');
+                return;
+            }
+            
+            const status = chatInterface.getAgenticStatus();
+            if (status.userProfile) {
+                console.log('👤 === USER PROFILE ===');
+                console.log('Skill Level:', status.userProfile.skillLevel);
+                console.log('Learning Style:', status.userProfile.learningStyle);
+                console.log('Total Interactions:', status.userProfile.totalInteractions);
+                console.log('Success Rate:', Math.round(status.userProfile.successRate * 100) + '%');
+                console.log('Strong Topics:', status.userProfile.strongTopics);
+                console.log('Weak Topics:', status.userProfile.weakTopics);
+                console.log('👤 === END PROFILE ===');
+            } else {
+                console.log('❌ User profile not available');
+            }
+        };
+
+        window.showLearningGoals = function() {
+            const chatInterface = window.chessChat?.interface;
+            if (!chatInterface?.getAgenticStatus) {
+                console.log('❌ Agentic features not available');
+                return;
+            }
+            
+            const status = chatInterface.getAgenticStatus();
+            if (status.goals) {
+                console.log('🎯 === LEARNING GOALS ===');
+                console.log('Active Goals:', status.goals.activeGoalCount);
+                console.log('Completed Goals:', status.goals.completedGoalCount);
+                console.log('Current Focus:', status.goals.currentFocus?.description || 'None');
+                
+                if (status.goals.topPriorityGoals?.length > 0) {
+                    console.log('Top Priority Goals:');
+                    status.goals.topPriorityGoals.forEach((goal, i) => {
+                        console.log(`  ${i + 1}. ${goal.description} (${goal.progress}% complete)`);
+                    });
+                }
+                
+                console.log('🎯 === END GOALS ===');
+            } else {
+                console.log('❌ Learning goals not available');
+            }
+        };
+
+        window.resetAgenticSystems = async function() {
+            const chatInterface = window.chessChat?.interface;
+            if (!chatInterface?.resetAgenticSystems) {
+                console.log('❌ Agentic reset not available');
+                return;
+            }
+            
+            console.log('🔄 Resetting agentic systems...');
+            await chatInterface.resetAgenticSystems();
+            console.log('✅ Agentic systems reset complete');
+        };
+
+        window.simulateAgenticLearning = async function() {
+            console.log('🎭 Simulating agentic learning session...');
+            
+            const chatInterface = window.chessChat?.interface;
+            if (!chatInterface?.getAgenticStatus) {
+                console.log('❌ Agentic features not available');
+                return;
+            }
+            
+            const status = chatInterface.getAgenticStatus();
+            if (!status.agenticMode) {
+                console.log('❌ Agentic mode not active');
+                return;
+            }
+            
+            const messages = [
+                "I'm a beginner and want to learn chess",
+                "Can you teach me about chess openings?",
+                "What's the French Defense?",
+                "Show me the position visually",
+                "I understand, can you explain the strategy?",
+                "What should I practice next?",
+                "Thanks, that was helpful!"
+            ];
+            
+            console.log('🎭 Sending', messages.length, 'learning messages...');
+            
+            for (let i = 0; i < messages.length; i++) {
+                try {
+                    console.log(`🎭 Message ${i + 1}:`, messages[i]);
+                    const response = await chatInterface.sendMessage(messages[i]);
+                    console.log(`✅ Response ${i + 1}:`, response.substring(0, 80) + '...');
+                    
+                    // Brief pause between messages
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                } catch (error) {
+                    console.error(`❌ Message ${i + 1} failed:`, error);
+                }
+            }
+            
+            // Show learning results
+            const updatedStatus = chatInterface.getAgenticStatus();
+            console.log('🎭 Learning simulation complete!');
+            console.log('📊 Results:');
+            console.log('  - Total interactions:', updatedStatus.agentStats?.sessionStats?.interactions || 0);
+            console.log('  - Goals created:', updatedStatus.goals?.activeGoalCount || 0);
+            console.log('  - User skill level:', updatedStatus.userProfile?.skillLevel || 'unknown');
+            console.log('  - Learning style:', updatedStatus.userProfile?.learningStyle || 'unknown');
         };
 
         window.testAITools = async function() {
@@ -434,289 +667,294 @@
                 const response1 = await chatInterface.sendMessage("Hello! What can you help me with?");
                 console.log('✅ Response 1:', response1.substring(0, 100) + '...');
                 
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
-                
-                // Test 2: Opening request (should trigger tools if enhanced)
-                console.log('🧪 Test 2: Opening teaching request (should use tools if enhanced)');
-                const response2 = await chatInterface.sendMessage("Can you teach me the French Defense?");
-                console.log('✅ Response 2:', response2.substring(0, 100) + '...');
-                
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
-                
-                // Test 3: Position analysis (should use current position tool)
-                console.log('🧪 Test 3: Position analysis request');
-                const response3 = await chatInterface.sendMessage("What do you think about the current position?");
-                console.log('✅ Response 3:', response3.substring(0, 100) + '...');
-                
-                console.log('🧪 All tool tests completed successfully');
-                
-            } catch (error) {
-                console.error('❌ Tool test failed:', error);
-            }
-        };
+await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
+               
+               // Test 2: Opening request (should trigger tools if enhanced)
+               console.log('🧪 Test 2: Opening teaching request (should use tools if enhanced)');
+               const response2 = await chatInterface.sendMessage("Can you teach me the French Defense?");
+               console.log('✅ Response 2:', response2.substring(0, 100) + '...');
+               
+               await new Promise(resolve => setTimeout(resolve, 1000)); // Small delay between tests
+               
+               // Test 3: Position analysis (should use current position tool)
+               console.log('🧪 Test 3: Position analysis request');
+               const response3 = await chatInterface.sendMessage("What do you think about the current position?");
+               console.log('✅ Response 3:', response3.substring(0, 100) + '...');
+               
+               console.log('🧪 All tool tests completed successfully');
+               
+           } catch (error) {
+               console.error('❌ Tool test failed:', error);
+           }
+       };
 
-        window.testChessToolsDirectly = async function() {
-            console.log('🛠️ Testing chess tools directly...');
-            
-            if (!window.ChessTools) {
-                console.error('❌ ChessTools class not available');
-                return;
-            }
-            
-            try {
-                // Create and initialize chess tools
-                const chessTools = new window.ChessTools();
-                await chessTools.initialize();
-                
-                const tools = chessTools.getToolsArray();
-                console.log('✅ Initialized', tools.length, 'tools');
-                
-                // Test search tool
-                const searchTool = tools.find(t => t.name === 'search_opening');
-                if (searchTool) {
-                    console.log('🔍 Testing search tool...');
-                    const searchResult = await searchTool.call({ searchTerm: 'french' });
-                    const parsed = JSON.parse(searchResult);
-                    console.log('✅ Search result:', parsed.success ? 'SUCCESS' : 'FAILED');
-                    if (parsed.success) {
-                        console.log('📊 Found', parsed.count, 'openings');
-                    }
-                }
-                
-                // Test position analysis tool
-                const analyzeTool = tools.find(t => t.name === 'analyze_current_position');
-                if (analyzeTool) {
-                    console.log('🧠 Testing analyze tool...');
-                    const analyzeResult = await analyzeTool.call({ analysisType: 'general' });
-                    const parsed = JSON.parse(analyzeResult);
-                    console.log('✅ Analyze result:', parsed.success ? 'SUCCESS' : 'FAILED');
-                }
-                
-                console.log('🛠️ Direct chess tools test completed');
-                
-            } catch (error) {
-                console.error('❌ Direct chess tools test failed:', error);
-            }
-        };
+       window.testChessToolsDirectly = async function() {
+           console.log('🛠️ Testing chess tools directly...');
+           
+           if (!window.ChessTools) {
+               console.error('❌ ChessTools class not available');
+               return;
+           }
+           
+           try {
+               // Create and initialize chess tools
+               const chessTools = new window.ChessTools();
+               await chessTools.initialize();
+               
+               const tools = chessTools.getToolsArray();
+               console.log('✅ Initialized', tools.length, 'tools');
+               
+               // Test search tool
+               const searchTool = tools.find(t => t.name === 'search_opening');
+               if (searchTool) {
+                   console.log('🔍 Testing search tool...');
+                   const searchResult = await searchTool.call({ searchTerm: 'french' });
+                   const parsed = JSON.parse(searchResult);
+                   console.log('✅ Search result:', parsed.success ? 'SUCCESS' : 'FAILED');
+                   if (parsed.success) {
+                       console.log('📊 Found', parsed.count, 'openings');
+                   }
+               }
+               
+               // Test position analysis tool
+               const analyzeTool = tools.find(t => t.name === 'analyze_current_position');
+               if (analyzeTool) {
+                   console.log('🧠 Testing analyze tool...');
+                   const analyzeResult = await analyzeTool.call({ analysisType: 'general' });
+                   const parsed = JSON.parse(analyzeResult);
+                   console.log('✅ Analyze result:', parsed.success ? 'SUCCESS' : 'FAILED');
+               }
+               
+               console.log('🛠️ Direct chess tools test completed');
+               
+           } catch (error) {
+               console.error('❌ Direct chess tools test failed:', error);
+           }
+       };
 
-        window.debugGameStateSystem = function() {
-            console.log('🔍 === COMPREHENSIVE GAME STATE DEBUG ===');
-            
-            // Test 1: Check if bridge exists
-            const bridge = window.gameStateContextBridge;
-            console.log('1. Bridge exists:', !!bridge);
-            
-            if (!bridge) {
-                console.error('❌ No game state bridge found!');
-                return;
-            }
-            
-            // Test 2: Check if bridge is ready
-            const isReady = bridge.isReady();
-            console.log('2. Bridge is ready:', isReady);
-            
-            if (!isReady) {
-                console.error('❌ Bridge not ready!');
-                return;
-            }
-            
-            // Test 3: Get simple context
-            const simpleContext = bridge.getSimpleContext();
-            console.log('3. Simple context:', simpleContext);
-            
-            // Test 4: Get full context
-            const fullContext = bridge.getContextForAI();
-            console.log('4. Full context available:', fullContext.available);
-            console.log('4. Full context keys:', Object.keys(fullContext));
-            
-            // Test 5: Check chat interface
-            const chatInterface = window.chessChat?.interface;
-            console.log('5. Chat interface exists:', !!chatInterface);
-            console.log('5. Chat interface type:', chatInterface?.constructor?.name);
-            
-            if (chatInterface) {
-                if (chatInterface.hasGameStateContext) {
-                    console.log('5. Chat has game state context:', chatInterface.hasGameStateContext());
-                }
-                if (chatInterface.getCurrentGameSummary) {
-                    console.log('5. Chat game summary:', chatInterface.getCurrentGameSummary());
-                }
-                if (chatInterface.getAvailableTools) {
-                    console.log('5. Available tools:', chatInterface.getAvailableTools());
-                }
-            }
-            
-            console.log('🔍 === END COMPREHENSIVE DEBUG ===');
-        };
+       window.debugGameStateSystem = function() {
+           console.log('🔍 === COMPREHENSIVE GAME STATE DEBUG ===');
+           
+           // Test 1: Check if bridge exists
+           const bridge = window.gameStateContextBridge;
+           console.log('1. Bridge exists:', !!bridge);
+           
+           if (!bridge) {
+               console.error('❌ No game state bridge found!');
+               return;
+           }
+           
+           // Test 2: Check if bridge is ready
+           const isReady = bridge.isReady();
+           console.log('2. Bridge is ready:', isReady);
+           
+           if (!isReady) {
+               console.error('❌ Bridge not ready!');
+               return;
+           }
+           
+           // Test 3: Get simple context
+           const simpleContext = bridge.getSimpleContext();
+           console.log('3. Simple context:', simpleContext);
+           
+           // Test 4: Get full context
+           const fullContext = bridge.getContextForAI();
+           console.log('4. Full context available:', fullContext.available);
+           console.log('4. Full context keys:', Object.keys(fullContext));
+           
+           // Test 5: Check chat interface
+           const chatInterface = window.chessChat?.interface;
+           console.log('5. Chat interface exists:', !!chatInterface);
+           console.log('5. Chat interface type:', chatInterface?.constructor?.name);
+           
+           if (chatInterface) {
+               if (chatInterface.hasGameStateContext) {
+                   console.log('5. Chat has game state context:', chatInterface.hasGameStateContext());
+               }
+               if (chatInterface.getCurrentGameSummary) {
+                   console.log('5. Chat game summary:', chatInterface.getCurrentGameSummary());
+               }
+               if (chatInterface.getAvailableTools) {
+                   console.log('5. Available tools:', chatInterface.getAvailableTools());
+               }
+           }
+           
+           console.log('🔍 === END COMPREHENSIVE DEBUG ===');
+       };
 
-        window.testAfterMove = function() {
-            console.log('🎯 === QUICK POST-MOVE TEST ===');
-            
-            const bridge = window.gameStateContextBridge;
-            if (bridge && bridge.isReady()) {
-                const context = bridge.getSimpleContext();
-                console.log('Current game state:', context);
-                
-                const fullContext = bridge.getContextForAI();
-                if (fullContext.available && fullContext.moveHistory) {
-                    console.log('Move history length:', fullContext.moveHistory.length);
-                    if (fullContext.moveHistory.length > 0) {
-                        const lastMove = fullContext.moveHistory[fullContext.moveHistory.length - 1];
-                        console.log('Last move:', lastMove);
-                    }
-                }
-            }
-            
-            console.log('🎯 === END QUICK TEST ===');
-        };
+       window.testAfterMove = function() {
+           console.log('🎯 === QUICK POST-MOVE TEST ===');
+           
+           const bridge = window.gameStateContextBridge;
+           if (bridge && bridge.isReady()) {
+               const context = bridge.getSimpleContext();
+               console.log('Current game state:', context);
+               
+               const fullContext = bridge.getContextForAI();
+               if (fullContext.available && fullContext.moveHistory) {
+                   console.log('Move history length:', fullContext.moveHistory.length);
+                   if (fullContext.moveHistory.length > 0) {
+                       const lastMove = fullContext.moveHistory[fullContext.moveHistory.length - 1];
+                       console.log('Last move:', lastMove);
+                   }
+               }
+           }
+           
+           console.log('🎯 === END QUICK TEST ===');
+       };
 
-        window.testGameStateAwareness = function() {
-            console.log('🔬 === GAME STATE AWARENESS TEST ===');
-            
-            const bridge = window.gameStateContextBridge;
-            if (!bridge) {
-                console.error('❌ Game state bridge not found');
-                return;
-            }
-            
-            if (!bridge.isReady()) {
-                console.error('❌ Game state bridge not ready');
-                return;
-            }
-            
-            const context = bridge.getContextForAI();
-            console.log('✅ Full context available:', context.available);
-            console.log('✅ Context keys:', Object.keys(context));
-            
-            const simple = bridge.getSimpleContext();
-            console.log('✅ Simple context:', simple);
-            
-            const chat = window.chessChat?.interface;
-            if (chat) {
-                console.log('✅ Chat type:', chat.constructor.name);
-                if (chat.hasGameStateContext) {
-                    console.log('✅ Chat has game state:', chat.hasGameStateContext());
-                }
-                if (chat.getCurrentGameSummary) {
-                    console.log('✅ Game summary:', chat.getCurrentGameSummary());
-                }
-            }
-            
-            console.log('🔬 === END TEST ===');
-        };
+       window.testGameStateAwareness = function() {
+           console.log('🔬 === GAME STATE AWARENESS TEST ===');
+           
+           const bridge = window.gameStateContextBridge;
+           if (!bridge) {
+               console.error('❌ Game state bridge not found');
+               return;
+           }
+           
+           if (!bridge.isReady()) {
+               console.error('❌ Game state bridge not ready');
+               return;
+           }
+           
+           const context = bridge.getContextForAI();
+           console.log('✅ Full context available:', context.available);
+           console.log('✅ Context keys:', Object.keys(context));
+           
+           const simple = bridge.getSimpleContext();
+           console.log('✅ Simple context:', simple);
+           
+           const chat = window.chessChat?.interface;
+           if (chat) {
+               console.log('✅ Chat type:', chat.constructor.name);
+               if (chat.hasGameStateContext) {
+                   console.log('✅ Chat has game state:', chat.hasGameStateContext());
+               }
+               if (chat.getCurrentGameSummary) {
+                   console.log('✅ Game summary:', chat.getCurrentGameSummary());
+               }
+           }
+           
+           console.log('🔬 === END TEST ===');
+       };
 
-        // Quick chat test function
-        window.testChatWithGameState = async function() {
-            console.log('💬 === CHAT WITH GAME STATE TEST ===');
-            
-            const chat = window.chessChat?.interface;
-            if (!chat) {
-                console.error('❌ Chat interface not found');
-                return;
-            }
-            
-            if (chat.hasGameStateContext && !chat.hasGameStateContext()) {
-                console.error('❌ Chat has no game state context');
-                return;
-            }
-            
-            console.log('📤 Sending test message to chat...');
-            try {
-                const response = await chat.sendMessage("What is the current position?");
-                console.log('📥 Chat response:', response);
-            } catch (error) {
-                console.error('❌ Chat test failed:', error);
-            }
-            
-            console.log('💬 === END CHAT TEST ===');
-        };
+       // Quick chat test function
+       window.testChatWithGameState = async function() {
+           console.log('💬 === CHAT WITH GAME STATE TEST ===');
+           
+           const chat = window.chessChat?.interface;
+           if (!chat) {
+               console.error('❌ Chat interface not found');
+               return;
+           }
+           
+           if (chat.hasGameStateContext && !chat.hasGameStateContext()) {
+               console.error('❌ Chat has no game state context');
+               return;
+           }
+           
+           console.log('📤 Sending test message to chat...');
+           try {
+               const response = await chat.sendMessage("What is the current position?");
+               console.log('📥 Chat response:', response);
+           } catch (error) {
+               console.error('❌ Chat test failed:', error);
+           }
+           
+           console.log('💬 === END CHAT TEST ===');
+       };
 
-        window.debugOpeningLookup = function() {
-            const bridge = window.gameStateContextBridge;
-            if (bridge && bridge.openingKnowledge) {
-                const oks = bridge.openingKnowledge;
-                
-                // Debug database structure
-                if (oks.debugDatabaseStructure) {
-                    oks.debugDatabaseStructure();
-                }
-                
-                // Test current position
-                const gameState = bridge.gameEngine.getGameState();
-                console.log('Testing current FEN:', gameState.fen);
-                
-                const result = oks.getOpeningInfo(gameState.fen);
-                console.log('Opening lookup result:', result);
-            }
-        };
+       window.debugOpeningLookup = function() {
+           const bridge = window.gameStateContextBridge;
+           if (bridge && bridge.openingKnowledge) {
+               const oks = bridge.openingKnowledge;
+               
+               // Debug database structure
+               if (oks.debugDatabaseStructure) {
+                   oks.debugDatabaseStructure();
+               }
+               
+               // Test current position
+               const gameState = bridge.gameEngine.getGameState();
+               console.log('Testing current FEN:', gameState.fen);
+               
+               const result = oks.getOpeningInfo(gameState.fen);
+               console.log('Opening lookup result:', result);
+           }
+       };
 
-        // Enhanced debug function specifically for tools
-        window.debugToolSystem = function() {
-            console.log('🛠️ === TOOL SYSTEM DEBUG ===');
-            
-            // Check if enhanced interface is loaded
-            console.log('EnhancedChatInterface available:', typeof window.EnhancedChatInterface === 'function');
-            console.log('ChessTools available:', typeof window.ChessTools === 'function');
-            console.log('ToolIntegration available:', typeof window.ToolIntegration === 'object');
-            
-            // Check current chat interface
-            const chat = window.chessChat?.interface;
-            if (chat) {
-                console.log('Current chat type:', chat.constructor.name);
-                console.log('Has tools:', !!chat.getAvailableTools);
-                
-                if (chat.getAvailableTools) {
-                    const tools = chat.getAvailableTools();
-                    console.log('Available tools:', tools);
-                } else {
-                    console.log('No getAvailableTools method - likely basic interface');
-                }
-            }
-            
-            // Test global tool access points
-            console.log('Opening knowledge system:', !!window.openingKnowledgeSystem);
-            console.log('App orchestrator:', !!window.appOrchestrator);
-            console.log('Game state bridge:', !!window.gameStateContextBridge);
-            
-            // Test tool integration functions
-            if (window.ToolIntegration) {
-                console.log('ToolIntegration functions:');
-                console.log('- initializeAIWithTools:', typeof window.ToolIntegration.initializeAIWithTools);
-                console.log('- testToolFunctionality:', typeof window.ToolIntegration.testToolFunctionality);
-                console.log('- setupGlobalToolAccess:', typeof window.ToolIntegration.setupGlobalToolAccess);
-                console.log('- quickTestChessTools:', typeof window.ToolIntegration.quickTestChessTools);
-            }
-            
-            console.log('🛠️ === END TOOL DEBUG ===');
-        };
+       // Enhanced debug function specifically for tools
+       window.debugToolSystem = function() {
+           console.log('🛠️ === TOOL SYSTEM DEBUG ===');
+           
+           // Check if enhanced interface is loaded
+           console.log('EnhancedChatInterface available:', typeof window.EnhancedChatInterface === 'function');
+           console.log('ChessTools available:', typeof window.ChessTools === 'function');
+           console.log('ToolIntegration available:', typeof window.ToolIntegration === 'object');
+           
+           // Check current chat interface
+           const chat = window.chessChat?.interface;
+           if (chat) {
+               console.log('Current chat type:', chat.constructor.name);
+               console.log('Has tools:', !!chat.getAvailableTools);
+               
+               if (chat.getAvailableTools) {
+                   const tools = chat.getAvailableTools();
+                   console.log('Available tools:', tools);
+               } else {
+                   console.log('No getAvailableTools method - likely basic interface');
+               }
+           }
+           
+           // Test global tool access points
+           console.log('Opening knowledge system:', !!window.openingKnowledgeSystem);
+           console.log('App orchestrator:', !!window.appOrchestrator);
+           console.log('Game state bridge:', !!window.gameStateContextBridge);
+           
+           // Test tool integration functions
+           if (window.ToolIntegration) {
+               console.log('ToolIntegration functions:');
+               console.log('- initializeAIWithTools:', typeof window.ToolIntegration.initializeAIWithTools);
+               console.log('- testToolFunctionality:', typeof window.ToolIntegration.testToolFunctionality);
+               console.log('- setupGlobalToolAccess:', typeof window.ToolIntegration.setupGlobalToolAccess);
+               console.log('- quickTestChessTools:', typeof window.ToolIntegration.quickTestChessTools);
+           }
+           
+           console.log('🛠️ === END TOOL DEBUG ===');
+       };
 
-        // Initialize opening lookup after everything loads
-        setTimeout(debugOpeningLookup, 1000);
+       // Initialize opening lookup after everything loads
+       setTimeout(debugOpeningLookup, 1000);
 
-        // Handle Stockfish status updates
-        if (typeof require !== 'undefined') {
-            const { ipcRenderer } = require('electron');
-            
-            // Listen for Stockfish errors
-            ipcRenderer.on('stockfish-error', (event, error) => {
-                console.error('Stockfish error from main process:', error);
-                const statusEl = document.getElementById('engineStatusText');
-                if (statusEl) {
-                    statusEl.textContent = 'Engine Error';
-                    statusEl.style.color = '#dc3545';
-                }
-            });
-        }
+       // Handle Stockfish status updates
+       if (typeof require !== 'undefined') {
+           const { ipcRenderer } = require('electron');
+           
+           // Listen for Stockfish errors
+           ipcRenderer.on('stockfish-error', (event, error) => {
+               console.error('Stockfish error from main process:', error);
+               const statusEl = document.getElementById('engineStatusText');
+               if (statusEl) {
+                   statusEl.textContent = 'Engine Error';
+                   statusEl.style.color = '#dc3545';
+               }
+           });
+       }
 
-        // Log available debug functions
-        console.log('📝 Enhanced AI debugging functions loaded:');
-        console.log('  - window.debugAI() - Show enhanced AI system status');
-        console.log('  - window.testAITools() - Test tool functionality with actual AI queries');
-        console.log('  - window.testChessToolsDirectly() - Test chess tools directly');
-        console.log('  - window.debugToolSystem() - Debug tool system specifically');
-        console.log('  - window.debugGameStateSystem() - Debug game state integration');
-        console.log('  - window.testChatWithGameState() - Test chat with game awareness');
-        console.log('  - window.testAfterMove() - Quick test after making a move');
-    </script>
+       // Log available debug functions
+       console.log('🔍 Agentic AI debugging functions loaded:');
+       console.log('  - window.debugAI() - Show agentic AI system status');
+       console.log('  - window.testAgenticFeatures() - Test agentic capabilities');
+       console.log('  - window.showUserProfile() - Display user learning profile');
+       console.log('  - window.showLearningGoals() - Display current learning goals');
+       console.log('  - window.resetAgenticSystems() - Reset user profile and goals');
+       console.log('  - window.simulateAgenticLearning() - Run learning simulation');
+       console.log('  - window.testAITools() - Test tool functionality with actual AI queries');
+       console.log('  - window.testChessToolsDirectly() - Test chess tools directly');
+       console.log('  - window.debugToolSystem() - Debug tool system specifically');
+       console.log('  - window.debugGameStateSystem() - Debug game state integration');
+       console.log('  - window.testChatWithGameState() - Test chat with game awareness');
+       console.log('  - window.testAfterMove() - Quick test after making a move');
+   </script>
 </body>
 </html>
