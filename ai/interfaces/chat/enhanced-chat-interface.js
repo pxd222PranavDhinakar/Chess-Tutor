@@ -2,6 +2,88 @@
  * Enhanced chat interface with LLM-driven tool usage - COMPLETE REWRITE WITH AGENTIC INTEGRATION
  */
 
+
+/**
+ * ResponseCache - Caches model responses to speed up repeated queries
+ */
+class ResponseCache {
+    constructor() {
+        this.cache = new Map();
+        this.maxSize = 50;
+        this.defaultTTL = 300000; // 5 minutes in milliseconds
+    }
+    
+    /**
+     * Generate cache key from message and context
+     */
+    getCacheKey(message, context) {
+        const normalizedMessage = message.toLowerCase().trim();
+        const contextKey = context?.fen || 'start';
+        return `${normalizedMessage}-${contextKey}`;
+    }
+    
+    /**
+     * Get cached response if it exists and is still valid
+     */
+    get(key) {
+        const cached = this.cache.get(key);
+        if (cached && Date.now() - cached.timestamp < this.defaultTTL) {
+            console.log('📦 ResponseCache: Cache hit for key:', key.substring(0, 50) + '...');
+            return cached.response;
+        }
+        
+        // Remove expired entry
+        if (cached) {
+            console.log('⏰ ResponseCache: Cache expired for key:', key.substring(0, 50) + '...');
+            this.cache.delete(key);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Set cached response with timestamp
+     */
+    set(key, response) {
+        // Implement LRU eviction - remove oldest entry if at max size
+        if (this.cache.size >= this.maxSize) {
+            const firstKey = this.cache.keys().next().value;
+            console.log('🗑️ ResponseCache: Evicting oldest entry:', firstKey.substring(0, 50) + '...');
+            this.cache.delete(firstKey);
+        }
+        
+        this.cache.set(key, { 
+            response, 
+            timestamp: Date.now() 
+        });
+        
+        console.log('💾 ResponseCache: Cached response for key:', key.substring(0, 50) + '...');
+        console.log('📊 ResponseCache: Cache size:', this.cache.size, '/', this.maxSize);
+    }
+    
+    /**
+     * Clear all cached responses
+     */
+    clear() {
+        this.cache.clear();
+        console.log('🧹 ResponseCache: Cache cleared');
+    }
+    
+    /**
+     * Get cache statistics
+     */
+    getStats() {
+        return {
+            size: this.cache.size,
+            maxSize: this.maxSize,
+            entries: Array.from(this.cache.keys()).map(key => ({
+                key: key.substring(0, 50) + '...',
+                age: Date.now() - this.cache.get(key).timestamp
+            }))
+        };
+    }
+}
+
 class EnhancedChatInterface {
     constructor() {
         this.llm = null;
@@ -48,9 +130,15 @@ class EnhancedChatInterface {
         - "The position analysis shows..."
 
         Stay focused on chess education and avoid meta-commentary about your thought process.`;
+
+        this.responseCache = new ResponseCache();
         
         console.log('🧠 EnhancedChatInterface: Initializing with agentic capabilities...');
     }
+
+
+
+    
 
     /**
      * Initialize the enhanced chat interface - UPDATED FOR DEEPSEEK WITH PROPER HANDLING
@@ -72,11 +160,11 @@ class EnhancedChatInterface {
             // UPDATED: Initialize with DeepSeek-R1:14b with proper parameters
             this.llm = new ChatOllama({
                 model: "deepseek-r1:14b",
-                temperature: 0.1,        // Very low for logical reasoning
-                num_predict: 600,        // More tokens for complex planning
-                top_p: 0.3,             // More focused output
-                top_k: 5,               // Very selective token choices
-                repeat_penalty: 1.1,    // Reduce repetition
+                temperature: 0.1,
+                num_predict: 200,        // Reduce from 600 to 200-300
+                top_p: 0.3,
+                top_k: 5,
+                repeat_penalty: 1.1,
                 baseUrl: "http://localhost:11434",
             });
             
@@ -147,16 +235,29 @@ class EnhancedChatInterface {
         console.log('💬 EnhancedChatInterface: Processing message with model-driven approach:', userMessage);
         
         try {
-            // Get game context for the model
+            // Get game context for cache key
             const gameContext = this.getGameStateContext();
+            const cacheKey = this.responseCache.getCacheKey(userMessage, gameContext);
             
-            // NEW APPROACH: Let model decide everything
+            // Check cache first
+            const cachedResponse = this.responseCache.get(cacheKey);
+            if (cachedResponse) {
+                console.log('⚡ EnhancedChatInterface: Using cached response');
+                this.updateConversationHistory(userMessage, cachedResponse);
+                return cachedResponse;
+            }
+            
+            // Cache miss - get fresh response from model
+            console.log('🔄 EnhancedChatInterface: Cache miss, querying model...');
             const modelResponse = await this.getModelDecisionAndResponse(userMessage, gameContext);
+            
+            // Cache the response
+            this.responseCache.set(cacheKey, modelResponse.finalResponse);
             
             // Update conversation history
             this.updateConversationHistory(userMessage, modelResponse.finalResponse);
             
-            // Optional: Update agentic systems for learning (without them controlling tools)
+            // Optional: Update agentic systems for learning
             if (this.agenticMode && this.chessCoachAgent) {
                 await this.updateAgenticLearning(userMessage, modelResponse.finalResponse);
             }
@@ -164,7 +265,7 @@ class EnhancedChatInterface {
             console.log('✅ EnhancedChatInterface: Model-driven response ready');
             return modelResponse.finalResponse;
             
-        } catch (error) {   
+        } catch (error) {
             console.error('❌ EnhancedChatInterface: Error in model-driven sendMessage:', error);
             return this.getFallbackResponse(userMessage);
         }
@@ -201,7 +302,7 @@ class EnhancedChatInterface {
     }
 
     /**
-     * Build prompt for model decision making - ENHANCED VERSION
+     * Build prompt for model decision making - FIXED VERSION with clearer tool logic
      */
     buildDecisionPrompt(userMessage, gameContext) {
         let prompt = `You are a chess coach AI. A student has sent you this message: "${userMessage}"
@@ -222,31 +323,44 @@ class EnhancedChatInterface {
 
         prompt += `AVAILABLE TOOLS:
     - search_opening: Find chess openings by name
-    - load_position: Load a chess position on the board
-    - get_opening_details: Get comprehensive opening information 
+    - load_position: Load a chess position on the board  
+    - get_opening_details: Get comprehensive opening information
     - analyze_current_position: Analyze the current board position
     - create_annotation: Add visual highlights/arrows to the board
 
-    DECISION GUIDELINES:
-    - If student asks about "best moves", "available moves", "good moves" AND there's a current position → use analyze_current_position + create_annotation with arrows BETWEEN ACTUAL PIECE POSITIONS AND LEGAL DESTINATIONS
-    - If student asks about highlighting → use create_annotation with squares that have pieces
-    - For arrows: use create_annotation with squares in pairs [from_square, to_square] where from_square has a piece and to_square is a legal destination
-    - Only suggest moves that are in the AVAILABLE MOVES list above
+    CRITICAL TOOL SEQUENCE RULES:
+    1. If student asks to "learn", "teach me", "show me" an OPENING by name → ALWAYS use this sequence:
+    → search_opening (find the opening) 
+    → load_position (load the opening position on board)
+    → create_annotation (highlight key squares/moves)
+
+    2. If student asks about "moves available", "best moves", "what should I play" in CURRENT position → use:
+    → analyze_current_position
+    → create_annotation (show arrows for best moves)
+
+    3. For highlighting/arrows: ONLY use squares that contain pieces and their legal destinations from the AVAILABLE MOVES section above
+
+    EXAMPLES:
+    "Teach me the Italian Game" → search_opening + load_position + create_annotation
+    "Show me the French Defense" → search_opening + load_position + create_annotation  
+    "What are my best moves here?" → analyze_current_position + create_annotation
+    "Highlight the center squares" → create_annotation only
 
     TASK: Decide how to respond to this student's message.
 
     Respond with a JSON object with this exact format:
     {
         "useTools": true/false,
-        "reasoning": "explanation of your decision",
+        "reasoning": "explanation of your decision and why you chose this tool sequence",
         "toolPlan": [
-            {"tool": "analyze_current_position", "input": "tactical", "reason": "analyze for best moves"},
-            {"tool": "create_annotation", "input": {"squares": ["c6", "d4", "f3", "e5"], "annotationType": "arrow", "reason": "show knight moves with arrows"}, "reason": "draw arrows for best knight moves"}
+            {"tool": "search_opening", "input": "Italian Game", "reason": "student wants to learn this opening"},
+            {"tool": "load_position", "input": "fen_from_search_result", "reason": "must load the opening position to show it visually"},
+            {"tool": "create_annotation", "input": {"squares": ["e4", "e5", "c4", "f3"], "annotationType": "highlight", "reason": "highlight key strategic squares"}, "reason": "show important squares in this opening"}
         ],
         "responseStrategy": "how you plan to respond after tools execute"
     }
 
-    IMPORTANT: When creating arrows, use squares from the legal moves analysis above. Only draw arrows from squares that contain pieces to squares that are legal destinations for those pieces!`;
+    IMPORTANT: When teaching openings, you MUST load the position first, then annotate it. Never analyze the starting position when teaching a specific opening!`
 
         return prompt;
     }
@@ -1458,12 +1572,37 @@ class EnhancedChatInterface {
                    squares.push(...this.findAdvancedPawns(board));
                    break;
                case 'arrow':
-                   if (gameState.currentPosition.moveNumber <= 3) {
-                       squares.push('e2', 'e4', 'd2', 'd4');
-                   } else {
-                       squares.push('e4', 'd5', 'f3', 'c6');
-                   }
-                   break;
+                    // Enhanced arrow creation using legal moves data
+                    if (squares.length >= 2) {
+                        // Group squares into from-to pairs
+                        for (let i = 0; i < squares.length - 1; i += 2) {
+                            const fromSquare = squares[i];
+                            const toSquare = squares[i + 1];
+                            
+                            if (isValidSquare(fromSquare) && isValidSquare(toSquare)) {
+                                // Verify this is a legal move if game engine is available
+                                if (window.appOrchestrator.gameEngine) {
+                                    const legalMoves = window.appOrchestrator.gameEngine.chess.moves({ verbose: true });
+                                    const isLegalMove = legalMoves.some(move => 
+                                        move.from === fromSquare && move.to === toSquare
+                                    );
+                                    
+                                    if (isLegalMove) {
+                                        boardAnnotations.addArrow(fromSquare, toSquare);
+                                        annotationsCreated++;
+                                        console.log(`🎯 Added legal move arrow: ${fromSquare} → ${toSquare}`);
+                                    } else {
+                                        console.warn(`⚠️ Skipped illegal move arrow: ${fromSquare} → ${toSquare}`);
+                                    }
+                                } else {
+                                    // Fallback if no game engine
+                                    boardAnnotations.addArrow(fromSquare, toSquare);
+                                    annotationsCreated++;
+                                }
+                            }
+                        }
+                    }
+                    break;
                case 'good':
                case 'best':
                case 'important':
@@ -1872,12 +2011,32 @@ class EnhancedChatInterface {
        const pieces = [];
        for (const [square, piece] of Object.entries(board)) {
            if (['Q', 'q', 'R', 'r', 'N', 'n', 'B', 'b'].includes(piece)) {
-               pieces.push(square);
+               pieces.push(square);c
            }
        }
        return pieces.slice(0, 4); // Limit to 4 pieces
    }
 }
+
+window.clearResponseCache = function() {
+    if (window.chessChat?.interface?.responseCache) {
+        window.chessChat.interface.responseCache.clear();
+        console.log('✅ Response cache cleared');
+    } else {
+        console.log('❌ No response cache found');
+    }
+};
+
+window.getCacheStats = function() {
+    if (window.chessChat?.interface?.responseCache) {
+        const stats = window.chessChat.interface.responseCache.getStats();
+        console.log('📊 Cache Stats:', stats);
+        return stats;
+    } else {
+        console.log('❌ No response cache found');
+        return null;
+    }
+};
 
 // Export for use
 if (typeof window !== 'undefined') {

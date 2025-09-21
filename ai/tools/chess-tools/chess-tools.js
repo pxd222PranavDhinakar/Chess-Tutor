@@ -376,6 +376,10 @@ try {
     const createAnnotationTool = tool(
         async ({ squares, annotationType, reason }) => {
             try {
+                // Normalize annotation type - ADD THIS LINE
+                if (annotationType === 'arrows') {
+                    annotationType = 'arrow';
+                }
                 console.log('🎨 CreateAnnotationTool: Creating annotations:', { squares, annotationType, reason });
                 
                 if (!window.appOrchestrator || !window.appOrchestrator.boardAnnotations) {
@@ -475,7 +479,7 @@ try {
             description: "Create visual annotations on the chess board including highlights, arrows, and move indicators. Use this when users ask to highlight pieces, show good moves, mark important squares, or create visual guides.",
             schema: z.object({
                 squares: z.array(z.string()).describe("Array of chess squares in algebraic notation (e.g., ['e4', 'd5', 'f3']). For arrows, provide pairs of squares [from, to, from2, to2]."),
-                annotationType: z.enum(['highlight', 'hint', 'arrow', 'move']).describe("Type of annotation: 'highlight' for red squares, 'hint' for green squares, 'arrow' for arrows between squares, 'move' for showing possible moves from a square"),
+                annotationType: z.enum(['highlight', 'hint', 'arrow', 'arrows', 'move']).describe("Type of annotation: highlight (squares), arrow/arrows (between squares), hint (suggestions), move (show legal moves)"),
                 reason: z.string().describe("Brief explanation of why these annotations are being created (e.g., 'highlighting the advanced pawns')")
             })
         }

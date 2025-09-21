@@ -562,6 +562,438 @@ class GameStateContextBridge {
         
         return this.openingKnowledge.searchByName(searchTerm);
     }
+
+    /**
+     * SAFE VERSION - Replace the methods in GameStateContextBridge with these fixed versions
+     */
+
+    /**
+     * Generate human-readable board representation for AI - SAFE VERSION
+     */
+    generateBoardRepresentation() {
+        if (!this.currentGameState) return null;
+
+        try {
+            // Get the chess instance from game engine safely
+            const chess = this.gameEngine && this.gameEngine.game ? this.gameEngine.game : null;
+            
+            if (!chess) {
+                console.warn('No chess instance available for board representation');
+                return "Board representation not available - no chess instance";
+            }
+
+            // Create visual board representation using FEN parsing instead of board() method
+            const fen = chess.fen();
+            const boardState = this.parseFenForBoard(fen);
+            
+            let boardVisual = "\n=== BOARD POSITION ===\n";
+            boardVisual += "  a b c d e f g h\n";
+            
+            for (let rank = 8; rank >= 1; rank--) {
+                boardVisual += `${rank} `;
+                for (let file of 'abcdefgh') {
+                    const square = file + rank;
+                    const piece = boardState[square];
+                    if (piece) {
+                        const symbol = this.getPieceSymbol(piece);
+                        boardVisual += `${symbol} `;
+                    } else {
+                        boardVisual += `. `;
+                    }
+                }
+                boardVisual += `${rank}\n`;
+            }
+            boardVisual += "  a b c d e f g h\n";
+
+            return boardVisual;
+            
+        } catch (error) {
+            console.error('Error generating board representation:', error);
+            return "Board representation failed - " + error.message;
+        }
+    }
+
+    /**
+     * Parse FEN to get board state - SAFE HELPER METHOD
+     */
+    parseFenForBoard(fen) {
+        const boardState = {};
+        
+        if (!fen) return boardState;
+        
+        const fenParts = fen.split(' ');
+        const position = fenParts[0];
+        const ranks = position.split('/');
+        
+        for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
+            const rank = 8 - rankIndex; // Convert to 1-8 rank numbering
+            const rankString = ranks[rankIndex];
+            let fileIndex = 0;
+            
+            for (let char of rankString) {
+                if (isNaN(char)) {
+                    // It's a piece
+                    const file = String.fromCharCode(97 + fileIndex); // 'a' + fileIndex
+                    const square = file + rank;
+                    boardState[square] = {
+                        type: char.toLowerCase(),
+                        color: char === char.toUpperCase() ? 'w' : 'b'
+                    };
+                    fileIndex++;
+                } else {
+                    // It's a number indicating empty squares
+                    fileIndex += parseInt(char);
+                }
+            }
+        }
+        
+        return boardState;
+    }
+
+    /**
+     * Get piece layout by square for AI understanding - SAFE VERSION
+     */
+    generatePieceLayout() {
+        if (!this.currentGameState) return null;
+
+        try {
+            const chess = this.gameEngine && this.gameEngine.game ? this.gameEngine.game : null;
+            
+            if (!chess) {
+                return {
+                    white: { pieces: [], positions: {} },
+                    black: { pieces: [], positions: {} },
+                    error: "No chess instance available"
+                };
+            }
+
+            const pieces = {
+                white: { pieces: [], positions: {} },
+                black: { pieces: [], positions: {} }
+            };
+
+            // Parse FEN to get piece positions safely
+            const fen = chess.fen();
+            const boardState = this.parseFenForBoard(fen);
+            
+            Object.entries(boardState).forEach(([square, piece]) => {
+                const color = piece.color === 'w' ? 'white' : 'black';
+                const pieceInfo = {
+                    type: this.getPieceFullName(piece.type),
+                    square: square,
+                    symbol: this.getPieceSymbol(piece)
+                };
+                
+                pieces[color].pieces.push(pieceInfo);
+                pieces[color].positions[square] = pieceInfo;
+            });
+
+            return pieces;
+            
+        } catch (error) {
+            console.error('Error generating piece layout:', error);
+            return {
+                white: { pieces: [], positions: {} },
+                black: { pieces: [], positions: {} },
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Generate comprehensive legal moves analysis - SAFE VERSION
+     */
+    generateLegalMovesAnalysis() {
+        if (!this.currentGameState) return null;
+
+        try {
+            const chess = this.gameEngine && this.gameEngine.game ? this.gameEngine.game : null;
+            
+            if (!chess) {
+                return {
+                    totalMoves: 0,
+                    byPiece: {},
+                    captures: [],
+                    checks: [],
+                    castling: [],
+                    promotions: [],
+                    detailed: [],
+                    error: "No chess instance available"
+                };
+            }
+
+            // Try to get moves - handle different Chess.js versions
+            let legalMoves = [];
+            try {
+                legalMoves = chess.moves({ verbose: true });
+            } catch (e) {
+                try {
+                    // Fallback - try simple moves and create verbose format
+                    const simpleMoves = chess.moves();
+                    legalMoves = simpleMoves.map(move => ({ san: move }));
+                } catch (e2) {
+                    console.error('Unable to get legal moves:', e2);
+                    return {
+                        totalMoves: 0,
+                        byPiece: {},
+                        captures: [],
+                        checks: [],
+                        castling: [],
+                        promotions: [],
+                        detailed: [],
+                        error: "Unable to get legal moves"
+                    };
+                }
+            }
+            
+            const movesAnalysis = {
+                totalMoves: legalMoves.length,
+                byPiece: {},
+                captures: [],
+                checks: [],
+                castling: [],
+                promotions: [],
+                detailed: []
+            };
+
+            legalMoves.forEach(move => {
+                try {
+                    // Handle both verbose and simple move formats
+                    const moveInfo = {
+                        from: move.from || 'unknown',
+                        to: move.to || 'unknown', 
+                        san: move.san || move,
+                        piece: move.piece ? this.getPieceFullName(move.piece) : 'unknown',
+                        isCapture: !!(move.captured || (move.san && move.san.includes('x'))),
+                        isCheck: !!(move.san && (move.san.includes('+') || move.san.includes('#'))),
+                        isCheckmate: !!(move.san && move.san.includes('#')),
+                        capturedPiece: move.captured ? this.getPieceFullName(move.captured) : null
+                    };
+
+                    // Categorize by piece type
+                    const pieceType = moveInfo.piece;
+                    if (!movesAnalysis.byPiece[pieceType]) {
+                        movesAnalysis.byPiece[pieceType] = [];
+                    }
+                    movesAnalysis.byPiece[pieceType].push(moveInfo);
+                    movesAnalysis.detailed.push(moveInfo);
+
+                    // Special move categories
+                    if (moveInfo.isCapture) {
+                        movesAnalysis.captures.push(moveInfo);
+                    }
+                    if (moveInfo.isCheck) {
+                        movesAnalysis.checks.push(moveInfo);
+                    }
+                    if (move.san && (move.san.includes('O-O') || move.san.includes('0-0'))) {
+                        movesAnalysis.castling.push(moveInfo);
+                    }
+                    if (move.promotion) {
+                        movesAnalysis.promotions.push(moveInfo);
+                    }
+                } catch (moveError) {
+                    console.warn('Error processing move:', move, moveError);
+                }
+            });
+
+            return movesAnalysis;
+            
+        } catch (error) {
+            console.error('Error generating legal moves analysis:', error);
+            return {
+                totalMoves: 0,
+                byPiece: {},
+                captures: [],
+                checks: [],
+                castling: [],
+                promotions: [],
+                detailed: [],
+                error: error.message
+            };
+        }
+    }
+
+    /**
+     * Helper methods - SAFE VERSIONS
+     */
+    getPieceSymbol(piece) {
+        const symbols = {
+            'p': piece.color === 'w' ? '♙' : '♟',
+            'r': piece.color === 'w' ? '♖' : '♜',
+            'n': piece.color === 'w' ? '♘' : '♞',
+            'b': piece.color === 'w' ? '♗' : '♝',
+            'q': piece.color === 'w' ? '♕' : '♛',
+            'k': piece.color === 'w' ? '♔' : '♚'
+        };
+        return symbols[piece.type] || '?';
+    }
+
+    getPieceFullName(pieceType) {
+        const names = {
+            'p': 'pawn',
+            'r': 'rook', 
+            'n': 'knight',
+            'b': 'bishop',
+            'q': 'queen',
+            'k': 'king'
+        };
+        return names[pieceType] || pieceType;
+    }
+
+    /**
+     * Enhanced context generation with comprehensive board understanding - SAFE VERSION
+     */
+    generateEnhancedContext() {
+        if (!this.isInitialized || !this.currentGameState) {
+            return {
+                available: false,
+                error: "Game state not available"
+            };
+        }
+
+        try {
+            const context = {
+                available: true,
+                timestamp: new Date().toISOString(),
+                
+                // Visual board representation
+                boardVisual: this.generateBoardRepresentation(),
+                
+                // Piece positions and layout
+                pieceLayout: this.generatePieceLayout(),
+                
+                // Comprehensive legal moves analysis
+                legalMoves: this.generateLegalMovesAnalysis(),
+                
+                // Current position basics
+                currentPosition: {
+                    fen: this.currentGameState.fen,
+                    turn: this.currentGameState.turn === 'w' ? 'White' : 'Black',
+                    moveNumber: this.currentGameState.moveCount,
+                    halfMoveClock: this.extractHalfMoveClock(),
+                    castlingRights: this.extractCastlingRights(),
+                    enPassantSquare: this.extractEnPassantSquare()
+                },
+
+                // Game status
+                gameStatus: {
+                    isCheck: this.currentGameState.isCheck,
+                    isCheckmate: this.currentGameState.isCheckmate,
+                    isStalemate: this.currentGameState.isStalemate,
+                    isDraw: this.currentGameState.isDraw,
+                    isGameOver: this.currentGameState.isGameOver,
+                    legalMovesCount: this.currentGameState.legalMoves ? this.currentGameState.legalMoves.length : 0
+                },
+
+                // Move history in readable format
+                moveHistory: this.formatMoveHistory(),
+
+                // Opening knowledge
+                openingKnowledge: this.getOpeningKnowledge(),
+
+                // Position characteristics
+                positionInfo: this.analyzePositionCharacteristics()
+            };
+
+            return context;
+            
+        } catch (error) {
+            console.error('Error generating enhanced context:', error);
+            return {
+                available: false,
+                error: "Enhanced context generation failed: " + error.message
+            };
+        }
+    }
+
+    /**
+     * Format enhanced context for LLM consumption - SAFE VERSION
+     */
+    formatEnhancedContextForLLM() {
+        try {
+            const context = this.generateEnhancedContext();
+            
+            if (!context.available) {
+                return `Current Game State: Not available (${context.error || 'Unknown error'})`;
+            }
+
+            let formatted = "=== ENHANCED GAME CONTEXT ===\n\n";
+            
+            // Board visualization
+            if (context.boardVisual && !context.boardVisual.includes('failed')) {
+                formatted += context.boardVisual + "\n";
+            } else {
+                formatted += "Board visualization not available\n\n";
+            }
+            
+            // Current turn and status
+            formatted += `Turn: ${context.currentPosition.turn} to move\n`;
+            formatted += `Move Number: ${context.currentPosition.moveNumber}\n`;
+            formatted += `Legal Moves Available: ${context.gameStatus.legalMovesCount}\n\n`;
+            
+            // Piece positions
+            if (context.pieceLayout && !context.pieceLayout.error) {
+                formatted += "=== PIECE POSITIONS ===\n";
+                formatted += `White pieces: ${context.pieceLayout.white.pieces.map(p => `${p.type} on ${p.square}`).join(', ')}\n`;
+                formatted += `Black pieces: ${context.pieceLayout.black.pieces.map(p => `${p.type} on ${p.square}`).join(', ')}\n\n`;
+            }
+            
+            // Legal moves analysis
+            if (context.legalMoves && !context.legalMoves.error && context.legalMoves.totalMoves > 0) {
+                formatted += "=== AVAILABLE MOVES ===\n";
+                
+                Object.entries(context.legalMoves.byPiece).forEach(([piece, moves]) => {
+                    if (moves.length > 0) {
+                        formatted += `${piece.charAt(0).toUpperCase() + piece.slice(1)} moves: `;
+                        formatted += moves.map(m => {
+                            if (m.from && m.to && m.from !== 'unknown' && m.to !== 'unknown') {
+                                return `${m.from}-${m.to}`;
+                            } else {
+                                return m.san;
+                            }
+                        }).join(', ') + '\n';
+                    }
+                });
+                
+                if (context.legalMoves.captures.length > 0) {
+                    formatted += `\nCapture opportunities: `;
+                    formatted += context.legalMoves.captures.map(m => {
+                        if (m.from && m.to && m.from !== 'unknown' && m.to !== 'unknown') {
+                            return `${m.from}x${m.to}${m.capturedPiece ? ' (takes ' + m.capturedPiece + ')' : ''}`;
+                        } else {
+                            return m.san;
+                        }
+                    }).join(', ') + '\n';
+                }
+                
+                if (context.legalMoves.checks.length > 0) {
+                    formatted += `\nChecking moves: `;
+                    formatted += context.legalMoves.checks.map(m => {
+                        if (m.from && m.to && m.from !== 'unknown' && m.to !== 'unknown') {
+                            return `${m.from}-${m.to}`;
+                        } else {
+                            return m.san;
+                        }
+                    }).join(', ') + '\n';
+                }
+            }
+            
+            // Opening information
+            if (context.openingKnowledge && context.openingKnowledge.available) {
+                formatted += `\n=== OPENING ===\n`;
+                formatted += `Opening: ${context.openingKnowledge.opening.name} (${context.openingKnowledge.opening.eco})\n`;
+                formatted += `Moves so far: ${context.openingKnowledge.opening.moves}\n`;
+            }
+            
+            formatted += "\n=== END ENHANCED CONTEXT ===\n";
+            
+            return formatted;
+            
+        } catch (error) {
+            console.error('Error formatting enhanced context for LLM:', error);
+            return `Enhanced Game Context: Error formatting context - ${error.message}`;
+        }
+    }
 }
 
 // Make it available globally
